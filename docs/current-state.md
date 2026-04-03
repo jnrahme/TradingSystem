@@ -13,22 +13,23 @@ This document is the plain-English truth layer for `NewTradingSystem`.
 - A clean execution path exists:
   - strategy plugin
   - strategy runtime
-  - risk engine
-  - execution engine
+  - risk engine with legacy-derived whitelist, daily-loss, intraday, position-stacking, and cumulative-risk guardrails
+  - execution engine with ledger-backed intraday metrics
   - canonical ledger
   - dashboard summary
 - One extracted strategy exists:
   - `legacy-iron-condor`
 - A static operator dashboard exists at `apps/dashboard/index.html`
 - A broker-scoped dashboard summary is generated at `apps/dashboard/data/summary.json`
+- A worker execution lock exists so overlapping runs cannot mutate the same paper state at once
 - Automated verification exists for the first vertical slice:
-  - 8 pytest tests currently pass
+  - 17 pytest tests currently pass
 
 ## What Does Not Exist Yet
 
 - Full parity with the legacy `trading` repo
 - Full legacy strategy coverage beyond the first options plugin
-- Full risk and safety parity with `trade_gateway.py` and `mandatory_trade_gate.py`
+- Full risk and safety parity beyond the strongest extracted guardrails from `trade_gateway.py` and `mandatory_trade_gate.py`
 - Full order reconciliation, stale-order cleanup, retry, and recovery flows
 - A production scheduler/daemon for market-hours autonomous runs
 - A replay/backtest lab with promotion scoring

@@ -205,6 +205,48 @@ class PortfolioLedger:
                     ),
                 )
 
+    def get_intraday_metrics(self, broker: str, account: AccountSnapshot) -> dict[str, float | int]:
+        today = utc_now().date().isoformat()
+        with self._connect() as conn:
+            order_counts = conn.execute(
+                """
+                select
+                    coalesce(sum(case when status = 'filled' then 1 else 0 end), 0) as fills_today,
+                    coalesce(sum(case when status in ('accepted', 'filled') then 1 else 0 end), 0) as orders_today
+                from orders
+                where broker = ?
+                  and substr(submitted_at, 1, 10) = ?
+                """,
+                (broker, today),
+            ).fetchone()
+            structure_counts = conn.execute(
+                """
+                select count(distinct i.intent_id) as structures_today
+                from intents i
+                join orders o on o.intent_id = i.intent_id
+                where i.broker = ?
+                  and i.purpose = 'entry'
+                  and i.asset_class = 'option_multi_leg'
+                  and o.status in ('accepted', 'filled')
+                  and substr(o.submitted_at, 1, 10) = ?
+                """,
+                (broker, today),
+            ).fetchone()
+
+        daily_pnl = 0.0
+        if isinstance(account.metadata, dict):
+            try:
+                daily_pnl = float(account.metadata.get("daily_pnl", 0.0) or 0.0)
+            except (TypeError, ValueError):
+                daily_pnl = 0.0
+
+        return {
+            "daily_pnl": round(daily_pnl, 2),
+            "fills_today": int(order_counts["fills_today"] or 0),
+            "orders_today": int(order_counts["orders_today"] or 0),
+            "structures_today": int(structure_counts["structures_today"] or 0),
+        }
+
     def build_summary(self, account: AccountSnapshot, broker: str) -> LedgerSummary:
         with self._connect() as conn:
             orders = conn.execute(

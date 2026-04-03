@@ -51,6 +51,13 @@ def parse_occ_symbol(symbol: str) -> ParsedOptionSymbol | None:
     )
 
 
+def extract_underlying(symbol: str) -> str:
+    parsed = parse_occ_symbol(symbol)
+    if parsed is not None:
+        return parsed.underlying
+    return symbol.strip().upper()
+
+
 def calculate_target_expiry(
     now: datetime,
     target_dte: int = 30,
@@ -130,3 +137,37 @@ def group_condors(positions: list[Position], as_of: date | None = None) -> list[
 
     return condors
 
+
+def estimate_condor_max_loss(condor: CondorSnapshot) -> float:
+    put_short = None
+    put_long = None
+    call_short = None
+    call_long = None
+    contracts = 1.0
+
+    for leg in condor.legs:
+        parsed = parse_occ_symbol(leg.symbol)
+        if parsed is None:
+            continue
+        contracts = max(contracts, abs(leg.qty))
+        if parsed.option_type == "P":
+            if leg.qty < 0:
+                put_short = parsed.strike
+            else:
+                put_long = parsed.strike
+        elif parsed.option_type == "C":
+            if leg.qty < 0:
+                call_short = parsed.strike
+            else:
+                call_long = parsed.strike
+
+    widths = []
+    if put_short is not None and put_long is not None:
+        widths.append(abs(put_short - put_long))
+    if call_short is not None and call_long is not None:
+        widths.append(abs(call_short - call_long))
+    if not widths:
+        return 0.0
+
+    widest_width = max(widths)
+    return round(max(0.0, widest_width * 100.0 * contracts - condor.entry_credit), 2)

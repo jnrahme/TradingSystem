@@ -121,14 +121,20 @@ class AlpacaPaperBrokerAdapter(BrokerAdapter):
 
     def get_account_snapshot(self) -> AccountSnapshot:
         payload = self._request("GET", f"{self.trading_base_url}/account")
+        equity = float(payload["equity"])
+        last_equity = float(payload.get("last_equity") or payload["equity"])
         return AccountSnapshot(
-            equity=float(payload["equity"]),
+            equity=equity,
             buying_power=float(payload["buying_power"]),
             cash=float(payload["cash"]),
             currency=payload["currency"],
             status=payload["status"],
             venue=self.name,
             mode=self.mode,
+            metadata={
+                "daily_pnl": round(equity - last_equity, 2),
+                "last_equity": last_equity,
+            },
         )
 
     def get_positions(self) -> list[Position]:
@@ -199,4 +205,3 @@ class AlpacaPaperBrokerAdapter(BrokerAdapter):
             fill_price=float(response["filled_avg_price"]) if response.get("filled_avg_price") else None,
             raw=response,
         )
-

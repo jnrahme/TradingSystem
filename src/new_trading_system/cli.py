@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 from .config import RuntimeConfig, project_root
-from .services.worker import PaperTradingWorker
+from .services.worker import PaperTradingWorker, WorkerLockBusyError
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -44,21 +44,24 @@ def main(argv: list[str] | None = None) -> int:
 
     broker = args.broker or config.default_broker
     worker = PaperTradingWorker(config=config, broker_name=broker)
-    if args.command == "run-once":
-        report = worker.run_once(strategy_ids=args.strategies, dry_run=not args.execute)
-        print(json.dumps(report.summary.payload, indent=2))
-        return 0
+    try:
+        if args.command == "run-once":
+            report = worker.run_once(strategy_ids=args.strategies, dry_run=not args.execute)
+            print(json.dumps(report.summary.payload, indent=2))
+            return 0
 
-    reports = worker.run_loop(
-        strategy_ids=args.strategies,
-        dry_run=not args.execute,
-        interval_seconds=args.interval_seconds,
-        max_iterations=args.max_iterations,
-    )
-    print(json.dumps([report.summary.payload for report in reports], indent=2))
-    return 0
+        reports = worker.run_loop(
+            strategy_ids=args.strategies,
+            dry_run=not args.execute,
+            interval_seconds=args.interval_seconds,
+            max_iterations=args.max_iterations,
+        )
+        print(json.dumps([report.summary.payload for report in reports], indent=2))
+        return 0
+    except WorkerLockBusyError as exc:
+        print(json.dumps({"error": "worker_lock_busy", "detail": str(exc)}, indent=2))
+        return 2
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

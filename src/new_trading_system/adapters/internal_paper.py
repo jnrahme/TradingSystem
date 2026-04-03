@@ -47,6 +47,7 @@ class InternalPaperBrokerAdapter(BrokerAdapter):
 
     def __init__(self, snapshot: InternalPaperSnapshot, starting_cash: float = 100000.0):
         self.snapshot = snapshot
+        self.starting_cash = starting_cash
         self.cash = starting_cash
         self._positions: dict[str, _PaperPosition] = {}
 
@@ -111,6 +112,7 @@ class InternalPaperBrokerAdapter(BrokerAdapter):
             status="ACTIVE",
             venue=self.name,
             mode=self.mode,
+            metadata={"daily_pnl": 0.0, "starting_cash": self.starting_cash},
         )
 
     def _position_current_price(self, position: _PaperPosition) -> float:

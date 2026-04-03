@@ -28,13 +28,14 @@ Core operating assumption:
 First runnable vertical slice:
 
 - `src/new_trading_system/services/worker.py`: paper worker orchestration
-- `src/new_trading_system/services/execution_engine.py`: intent-to-broker execution path
-- `src/new_trading_system/services/risk_engine.py`: paper-only and position-risk gating
+- `src/new_trading_system/services/execution_engine.py`: intent-to-broker execution path with ledger-backed intraday checks
+- `src/new_trading_system/services/risk_engine.py`: paper-only, opening-vs-closing, whitelist, and cumulative-risk guardrails extracted from the legacy gateway
 - `src/new_trading_system/services/portfolio_ledger.py`: canonical SQLite-backed ledger and dashboard summary
 - `src/new_trading_system/adapters/internal_paper.py`: internal simulator broker
 - `src/new_trading_system/adapters/alpaca_paper.py`: Alpaca paper broker and market-data adapter
 - `src/new_trading_system/strategies/legacy_iron_condor.py`: first extracted legacy options strategy plugin
 - `apps/dashboard/index.html`: static operator dashboard for the generated summary JSON
+- `var/worker.lock`: overlap protection so two worker runs cannot mutate the same paper state concurrently
 
 Quick start:
 

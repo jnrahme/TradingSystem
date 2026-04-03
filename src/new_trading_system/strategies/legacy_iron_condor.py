@@ -46,7 +46,14 @@ class LegacyIronCondorStrategy:
             enabled_by_default=True,
             paper_only_by_default=True,
             requires_manual_live_approval=True,
-            tags=("legacy", "options", "iron-condor", "paper-only"),
+            tags=(
+                "legacy",
+                "options",
+                "iron-condor",
+                "paper-only",
+                "liquid-etf-only",
+                "defined-risk-only",
+            ),
         )
 
     def _choose_contract(self, contracts, option_type: str, target_strike: float):
@@ -70,6 +77,7 @@ class LegacyIronCondorStrategy:
             min_dte=self.settings.min_dte,
             max_dte=self.settings.max_dte,
         )
+        dte = (expiry - context.now.date()).days
         strikes = calculate_condor_strikes(price=price, wing_width=self.settings.wing_width)
         contracts = context.market.get_option_contracts(self.settings.underlying, expiry.isoformat())
         if not contracts:
@@ -116,6 +124,13 @@ class LegacyIronCondorStrategy:
             metadata={
                 "underlying_price": price,
                 "expiry": expiry.isoformat(),
+                "dte": dte,
+                "min_dte": self.settings.min_dte,
+                "max_dte": self.settings.max_dte,
+                "strategy_type": "iron_condor",
+                "defined_risk": True,
+                "allowed_underlyings": ["SPY", "SPX", "XSP", "QQQ", "IWM"],
+                "min_credit": self.settings.min_credit,
                 "strikes": strikes,
                 "estimated_credit": credit,
                 "exit_dte": self.settings.exit_dte,
@@ -162,6 +177,9 @@ class LegacyIronCondorStrategy:
                 "mark_to_close": condor.mark_to_close,
                 "unrealized_pl": condor.unrealized_pl,
                 "dte": condor.dte,
+                "strategy_type": "iron_condor",
+                "defined_risk": True,
+                "allowed_underlyings": ["SPY", "SPX", "XSP", "QQQ", "IWM"],
             },
         )
 

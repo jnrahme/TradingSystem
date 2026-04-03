@@ -34,8 +34,8 @@
 - [x] Add a current-state truth document for the app.
 - [x] Add a documentation-freshness contract and repo-level LLM instructions.
 - [x] Inventory every high-value legacy strategy, script family, and workflow into extract / redesign / reference-only / discard buckets.
-- [ ] Port the strongest risk rules from `trade_gateway.py` into the new risk engine.
-- [ ] Port the strongest opening-versus-closing order safety rules from `mandatory_trade_gate.py`.
+- [x] Port the strongest risk rules from `trade_gateway.py` into the new risk engine.
+- [x] Port the strongest opening-versus-closing order safety rules from `mandatory_trade_gate.py`.
 - [ ] Collapse useful legacy verification and sync scripts into a smaller new CLI surface.
 - [ ] Define the reduced workflow set that replaces the useful legacy GitHub Actions without recreating the old workflow sprawl.
 

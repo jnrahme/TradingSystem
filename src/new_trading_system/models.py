@@ -88,6 +88,7 @@ class AccountSnapshot:
     status: str
     venue: str
     mode: str
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -149,6 +150,7 @@ class RiskDecision:
     approved: bool
     reasons: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    checks: list[str] = field(default_factory=list)
 
 
 @dataclass(slots=True)

@@ -37,6 +37,7 @@ class RuntimeConfig:
     dashboard_summary_path: Path
     strategy_state_dir: Path
     internal_paper_state_path: Path
+    worker_lock_path: Path
     default_broker: str
     alpaca_api_key: str | None
     alpaca_api_secret: str | None
@@ -53,6 +54,7 @@ class RuntimeConfig:
         dashboard_summary_path = root_path / "apps" / "dashboard" / "data" / "summary.json"
         strategy_state_dir = root_path / "var" / "strategy-state"
         internal_paper_state_path = root_path / "var" / "internal-paper-state.json"
+        worker_lock_path = root_path / "var" / "worker.lock"
         state_db_path.parent.mkdir(parents=True, exist_ok=True)
         dashboard_summary_path.parent.mkdir(parents=True, exist_ok=True)
         strategy_state_dir.mkdir(parents=True, exist_ok=True)
@@ -63,6 +65,7 @@ class RuntimeConfig:
             dashboard_summary_path=dashboard_summary_path,
             strategy_state_dir=strategy_state_dir,
             internal_paper_state_path=internal_paper_state_path,
+            worker_lock_path=worker_lock_path,
             default_broker=os.environ.get("NTS_DEFAULT_BROKER", "internal-paper"),
             alpaca_api_key=os.environ.get("ALPACA_PAPER_API_KEY"),
             alpaca_api_secret=os.environ.get("ALPACA_PAPER_API_SECRET"),

@@ -25,6 +25,7 @@ class ExecutionEngine:
         results: list[OrderResult] = []
         for intent in intents:
             self.ledger.record_intent(intent)
+            intraday_metrics = self.ledger.get_intraday_metrics(self.broker.name, account)
             decision = self.risk_engine.evaluate(
                 manifest=manifest,
                 account=account,
@@ -32,6 +33,7 @@ class ExecutionEngine:
                 intent=intent,
                 market_open=market_open,
                 broker_mode=self.broker.mode,
+                intraday_metrics=intraday_metrics,
             )
 
             if not decision.approved:
@@ -42,7 +44,11 @@ class ExecutionEngine:
                     broker=self.broker.name,
                     status=OrderStatus.REJECTED,
                     submitted_at=utc_now(),
-                    raw={"reasons": decision.reasons, "warnings": decision.warnings},
+                    raw={
+                        "reasons": decision.reasons,
+                        "warnings": decision.warnings,
+                        "checks": decision.checks,
+                    },
                 )
                 self.ledger.record_order_result(intent, result)
                 results.append(result)
@@ -56,7 +62,11 @@ class ExecutionEngine:
                     broker=self.broker.name,
                     status=OrderStatus.SKIPPED,
                     submitted_at=utc_now(),
-                    raw={"warnings": decision.warnings, "dry_run": True},
+                    raw={
+                        "warnings": decision.warnings,
+                        "checks": decision.checks,
+                        "dry_run": True,
+                    },
                     fill_price=intent.limit_price,
                 )
                 self.ledger.record_order_result(intent, result)
@@ -65,8 +75,11 @@ class ExecutionEngine:
 
             result = self.broker.submit_order(intent)
             result.raw.setdefault("warnings", decision.warnings)
+            result.raw.setdefault("checks", decision.checks)
             self.ledger.record_order_result(intent, result)
             results.append(result)
+            positions = self.broker.get_positions()
+            account = self.broker.get_account_snapshot()
 
         refreshed_positions = self.broker.get_positions()
         self.ledger.replace_positions(self.broker.name, refreshed_positions)

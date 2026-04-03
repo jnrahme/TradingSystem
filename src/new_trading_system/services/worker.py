@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from dataclasses import dataclass
+import fcntl
+import os
+from pathlib import Path
 import time
 
 from ..adapters.alpaca_paper import AlpacaPaperBrokerAdapter
@@ -21,6 +25,40 @@ class WorkerReport:
     dry_run: bool
     results: list[OrderResult]
     summary: LedgerSummary
+
+
+class WorkerLockBusyError(RuntimeError):
+    pass
+
+
+@contextmanager
+def worker_execution_lock(lock_path: Path):
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    handle = lock_path.open("a+", encoding="utf-8")
+    locked = False
+    try:
+        try:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            locked = True
+        except BlockingIOError as exc:
+            raise WorkerLockBusyError(
+                f"worker execution already in progress for lock {lock_path}"
+            ) from exc
+
+        handle.seek(0)
+        handle.truncate()
+        handle.write(str(os.getpid()))
+        handle.flush()
+        yield
+    finally:
+        if locked:
+            try:
+                handle.seek(0)
+                handle.truncate()
+                handle.flush()
+            finally:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+        handle.close()
 
 
 def build_broker(config: RuntimeConfig, broker_name: str):
@@ -50,59 +88,72 @@ def build_registry() -> StrategyRegistry:
 class PaperTradingWorker:
     def __init__(self, config: RuntimeConfig, broker_name: str):
         self.config = config
+        self.broker_name = broker_name
         self.broker = build_broker(config, broker_name)
         self.ledger = PortfolioLedger(config.state_db_path)
         self.runtime = StrategyRuntime(
             ledger=self.ledger,
             state_store=JsonStrategyStateStore(config.strategy_state_dir),
         )
+        self.risk_engine = RiskEngine()
+        self.execution = ExecutionEngine(broker=self.broker, ledger=self.ledger, risk_engine=self.risk_engine)
+        self.registry = build_registry()
+
+    def _refresh_broker(self) -> None:
+        self.broker = build_broker(self.config, self.broker_name)
         self.execution = ExecutionEngine(
             broker=self.broker,
             ledger=self.ledger,
-            risk_engine=RiskEngine(),
+            risk_engine=self.risk_engine,
         )
-        self.registry = build_registry()
 
     def run_once(self, strategy_ids: list[str] | None = None, dry_run: bool = True) -> WorkerReport:
-        clock = self.broker.get_clock()
-        account = self.broker.get_account_snapshot()
-        positions = self.broker.get_positions()
-        self.ledger.replace_positions(self.broker.name, positions)
+        with worker_execution_lock(self.config.worker_lock_path):
+            self._refresh_broker()
+            clock = self.broker.get_clock()
+            account = self.broker.get_account_snapshot()
+            positions = self.broker.get_positions()
+            self.ledger.replace_positions(self.broker.name, positions)
 
-        strategies = self.registry.resolve(strategy_ids)
-        outcomes = self.runtime.evaluate(
-            strategies=strategies,
-            account=account,
-            clock=clock,
-            positions=positions,
-            market=self.broker,
-            broker_name=self.broker.name,
-        )
-
-        results: list[OrderResult] = []
-        for strategy in strategies:
-            manifest = strategy.manifest()
-            outcome = outcomes[manifest.strategy_id]
-            results.extend(
-                self.execution.process(
-                    manifest=manifest,
-                    account=account,
-                    positions=self.broker.get_positions(),
-                    intents=outcome.intents,
-                    market_open=clock.is_open,
-                    dry_run=dry_run,
-                )
+            strategies = self.registry.resolve(strategy_ids)
+            outcomes = self.runtime.evaluate(
+                strategies=strategies,
+                account=account,
+                clock=clock,
+                positions=positions,
+                market=self.broker,
+                broker_name=self.broker.name,
             )
 
-        final_account = self.broker.get_account_snapshot()
-        summary = self.ledger.write_summary(
-            self.config.dashboard_summary_path,
-            final_account,
-            broker=self.broker.name,
-        )
-        if isinstance(self.broker, InternalPaperBrokerAdapter):
-            self.broker.save_state(self.config.internal_paper_state_path)
-        return WorkerReport(broker=self.broker.name, dry_run=dry_run, results=results, summary=summary)
+            results: list[OrderResult] = []
+            for strategy in strategies:
+                manifest = strategy.manifest()
+                outcome = outcomes[manifest.strategy_id]
+                results.extend(
+                    self.execution.process(
+                        manifest=manifest,
+                        account=account,
+                        positions=self.broker.get_positions(),
+                        intents=outcome.intents,
+                        market_open=clock.is_open,
+                        dry_run=dry_run,
+                    )
+                )
+
+            final_account = self.broker.get_account_snapshot()
+            summary = self.ledger.write_summary(
+                self.config.dashboard_summary_path,
+                final_account,
+                broker=self.broker.name,
+            )
+            if isinstance(self.broker, InternalPaperBrokerAdapter):
+                self.broker.save_state(self.config.internal_paper_state_path)
+            return WorkerReport(
+                broker=self.broker.name,
+                dry_run=dry_run,
+                results=results,
+                summary=summary,
+            )
 
     def run_loop(
         self,

@@ -280,9 +280,15 @@ We should consider the old repo successfully absorbed when:
 
 ## Immediate Next Extraction Targets
 
-1. Port the strongest risk rules from `trade_gateway.py` into `risk_engine.py`
-2. Port the mandatory opening-vs-closing order safety concepts from `mandatory_trade_gate.py`
-3. Port VIX mean reversion logic into the new strategy and market layer
+Completed on 2026-04-03:
+
+1. Ported the strongest risk rules from `trade_gateway.py` into `risk_engine.py`
+2. Ported the mandatory opening-vs-closing order safety concepts from `mandatory_trade_gate.py`
+
+Next:
+
+3. Collapse useful verification and sync scripts into a smaller new CLI surface
 4. Build Alpaca reconciliation and stale-order cleanup
 5. Define the broker capability registry
-6. Start replay-lab scaffolding for strategy promotion
+6. Port VIX mean reversion logic into the new strategy and market layer
+7. Start replay-lab scaffolding for strategy promotion
