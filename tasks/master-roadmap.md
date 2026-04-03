@@ -39,6 +39,7 @@
 - [x] Collapse useful legacy verification and sync scripts into a smaller new CLI surface.
 - [ ] Finish Alpaca order lifecycle parity with stronger fill reconciliation, stale-order cleanup policy, and recovery hooks.
 - [ ] Finish legacy iron-condor lifecycle parity beyond the current entry-only slice.
+- [x] Add first-pass legacy iron-condor lifecycle controls: profit/stop/DTE exits, duplicate-expiry blocking, and broken-structure detection.
 - [ ] Define the reduced workflow set that replaces the useful legacy GitHub Actions without recreating the old workflow sprawl.
 
 ## Phase 3 — Research Lab

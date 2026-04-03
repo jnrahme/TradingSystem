@@ -34,7 +34,7 @@ First runnable vertical slice:
 - `src/new_trading_system/services/portfolio_ledger.py`: canonical SQLite-backed ledger and dashboard summary
 - `src/new_trading_system/adapters/internal_paper.py`: internal simulator broker
 - `src/new_trading_system/adapters/alpaca_paper.py`: Alpaca paper broker and market-data adapter
-- `src/new_trading_system/strategies/legacy_iron_condor.py`: first extracted legacy options strategy plugin
+- `src/new_trading_system/strategies/legacy_iron_condor.py`: first extracted legacy options strategy plugin with profit/stop/DTE exits, duplicate-expiry blocking, and broken-structure alerts
 - `apps/dashboard/index.html`: static operator dashboard for the generated summary JSON
 - `var/worker.lock`: overlap protection so two worker runs cannot mutate the same paper state concurrently
 

@@ -29,6 +29,15 @@ class CondorSnapshot:
     dte: int
 
 
+@dataclass(slots=True)
+class CondorStructureIssue:
+    underlying: str
+    expiry: date
+    legs: list[Position]
+    dte: int
+    issue: str
+
+
 def build_occ_symbol(underlying: str, expiry: date, option_type: str, strike: float) -> str:
     date_part = expiry.strftime("%y%m%d")
     strike_part = f"{int(round(strike * 1000)):08d}"
@@ -136,6 +145,35 @@ def group_condors(positions: list[Position], as_of: date | None = None) -> list[
         )
 
     return condors
+
+
+def find_condor_structure_issues(
+    positions: list[Position],
+    as_of: date | None = None,
+) -> list[CondorStructureIssue]:
+    grouped: dict[tuple[str, date], list[Position]] = {}
+    today = as_of or date.today()
+
+    for position in positions:
+        parsed = parse_occ_symbol(position.symbol)
+        if parsed is None:
+            continue
+        grouped.setdefault((parsed.underlying, parsed.expiry), []).append(position)
+
+    issues: list[CondorStructureIssue] = []
+    for (underlying, expiry), legs in sorted(grouped.items()):
+        if len(legs) == 4:
+            continue
+        issues.append(
+            CondorStructureIssue(
+                underlying=underlying,
+                expiry=expiry,
+                legs=sorted(legs, key=lambda leg: leg.symbol),
+                dte=max(0, (expiry - today).days),
+                issue="too_many_legs" if len(legs) > 4 else "incomplete_condor",
+            )
+        )
+    return issues
 
 
 def estimate_condor_max_loss(condor: CondorSnapshot) -> float:

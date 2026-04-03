@@ -287,11 +287,12 @@ Completed on 2026-04-03:
 3. Collapsed useful legacy verification and sync scripts into first-pass `reconcile` and `verify` CLI commands
 4. Added broker-versus-ledger reconciliation plus stale-order verification and cancellation hooks
 5. Made worktree checkouts reuse the root `.env.paper.local` so paper-broker verification still works on isolated branches
+6. Added first-pass iron-condor lifecycle parity: profit-target, stop-loss, and DTE exits, duplicate-expiry blocking, and broken-structure alerts
 
 Next:
 
-6. Finish iron-condor lifecycle parity beyond the current entry-only slice
-7. Define the broker capability registry
-8. Port VIX mean reversion logic into the new strategy and market layer
-9. Start replay-lab scaffolding for strategy promotion
-10. Define the reduced workflow set that replaces the useful legacy GitHub Actions
+7. Finish iron-condor scanner and signal parity beyond the current lifecycle controls
+8. Define the broker capability registry
+9. Port VIX mean reversion logic into the new strategy and market layer
+10. Start replay-lab scaffolding for strategy promotion
+11. Define the reduced workflow set that replaces the useful legacy GitHub Actions

@@ -20,21 +20,26 @@ This document is the plain-English truth layer for `NewTradingSystem`.
   - dashboard summary
 - One extracted strategy exists:
   - `legacy-iron-condor`
+  - it now manages profit-target, stop-loss, and DTE exits
+  - it now blocks duplicate entries into the same expiry
+  - it now surfaces non-canonical condor structures as alerts instead of silently ignoring them
 - A static operator dashboard exists at `apps/dashboard/index.html`
 - A broker-scoped dashboard summary is generated at `apps/dashboard/data/summary.json`
 - A worker execution lock exists so overlapping runs cannot mutate the same paper state at once
 - Reconcile and verify CLI commands now absorb the first useful legacy sync and verification behaviors
 - Worktree checkouts can reuse the root `.env.paper.local` for Alpaca paper verification without copying the file into each branch checkout
 - Automated verification exists for the first vertical slice:
-  - 23 pytest tests currently pass
+  - 28 pytest tests currently pass
   - internal-paper run, reconcile, and verify commands pass sequentially
   - Alpaca paper verify passes from a dedicated git worktree
+  - repeated internal-paper execute runs still avoid reopening the same condor expiry
 
 ## What Does Not Exist Yet
 
 - Full parity with the legacy `trading` repo
 - Full legacy strategy coverage beyond the first options plugin
 - Full risk and safety parity beyond the strongest extracted guardrails from `trade_gateway.py` and `mandatory_trade_gate.py`
+- Full legacy iron-condor entry-signal and scanner parity, including VIX timing and richer expiry discovery
 - Full fill reconciliation, retry, and recovery flows
 - A production scheduler/daemon for market-hours autonomous runs
 - A replay/backtest lab with promotion scoring

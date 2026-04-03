@@ -3,7 +3,12 @@ from __future__ import annotations
 from datetime import date
 
 from new_trading_system.models import AssetClass, Position
-from new_trading_system.occ import build_occ_symbol, group_condors, parse_occ_symbol
+from new_trading_system.occ import (
+    build_occ_symbol,
+    find_condor_structure_issues,
+    group_condors,
+    parse_occ_symbol,
+)
 
 
 def test_build_and_parse_occ_symbol_round_trip() -> None:
@@ -34,3 +39,18 @@ def test_group_condors_calculates_entry_credit_and_pnl() -> None:
     assert condors[0].unrealized_pl == 200.0
     assert condors[0].dte == 28
 
+
+def test_find_condor_structure_issues_flags_incomplete_groups() -> None:
+    positions = [
+        Position("SPY260501P00615000", "SPY", AssetClass.OPTION, 1, 5.0, 2.0, 200.0, -300.0),
+        Position("SPY260501P00625000", "SPY", AssetClass.OPTION, -1, 7.0, 3.0, -300.0, 400.0),
+        Position("SPY260501C00685000", "SPY", AssetClass.OPTION, -1, 7.0, 3.0, -300.0, 400.0),
+    ]
+
+    issues = find_condor_structure_issues(positions, as_of=date(2026, 4, 3))
+
+    assert len(issues) == 1
+    assert issues[0].issue == "incomplete_condor"
+    assert issues[0].underlying == "SPY"
+    assert issues[0].expiry == date(2026, 5, 1)
+    assert issues[0].dte == 28
