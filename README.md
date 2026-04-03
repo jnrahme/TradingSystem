@@ -2,7 +2,14 @@
 
 This repository is scaffolded as a broker-agnostic, multi-strategy trading platform.
 
-Start with `index.html` for the full redesign brief. The repo is organized so the trading system, strategies, reusable SDKs, dashboards, schemas, and infrastructure can evolve independently.
+Start with:
+
+- `index.html` for the platform redesign brief
+- `docs/plans/2026-04-03-market-intelligence-master-plan.md` for the market-intelligence and growth strategy
+- `tasks/master-roadmap.md` for the execution backlog
+- `loop-system/README.md` for the autonomous build/research loop
+
+The repo is organized so the trading system, strategies, reusable SDKs, dashboards, schemas, and infrastructure can evolve independently.
 
 Core operating assumption:
 
