@@ -2,7 +2,16 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from .models import AccountSnapshot, MarketClock, OptionContract, OrderIntent, OrderResult, Position, Quote
+from .models import (
+    AccountSnapshot,
+    BrokerOrder,
+    MarketClock,
+    OptionContract,
+    OrderIntent,
+    OrderResult,
+    Position,
+    Quote,
+)
 
 
 class MarketGateway(Protocol):
@@ -32,3 +41,8 @@ class BrokerAdapter(MarketGateway, Protocol):
     def submit_order(self, intent: OrderIntent) -> OrderResult:
         ...
 
+    def list_orders(self, status: str = "all", limit: int = 200) -> list[BrokerOrder]:
+        ...
+
+    def cancel_order(self, order_id: str) -> dict[str, str | bool]:
+        ...

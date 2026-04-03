@@ -167,6 +167,24 @@ class OrderResult:
 
 
 @dataclass(slots=True)
+class BrokerOrder:
+    order_id: str
+    broker: str
+    status: str
+    symbol: str | None
+    side: str | None
+    order_type: str | None
+    quantity: float | None
+    filled_quantity: float | None
+    limit_price: float | None
+    created_at: datetime
+    submitted_at: datetime | None = None
+    filled_at: datetime | None = None
+    legs: list[OptionLeg] = field(default_factory=list)
+    raw: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
 class StrategyAlert:
     level: str
     message: str

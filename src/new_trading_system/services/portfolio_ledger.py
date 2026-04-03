@@ -3,11 +3,10 @@ from __future__ import annotations
 import json
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from ..models import AccountSnapshot, OrderIntent, OrderResult, Position, json_ready
+from ..models import AccountSnapshot, AssetClass, OrderIntent, OrderResult, Position, json_ready
 from ..time_utils import utc_now
 
 
@@ -204,6 +203,38 @@ class PortfolioLedger:
                         utc_now().isoformat(),
                     ),
                 )
+
+    def get_positions(self, broker: str) -> list[Position]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                """
+                select symbol, underlying, asset_class, qty, avg_entry_price, current_price,
+                       market_value, unrealized_pl, strategy_id, payload
+                from positions_latest
+                where broker = ?
+                order by symbol
+                """,
+                (broker,),
+            ).fetchall()
+
+        positions: list[Position] = []
+        for row in rows:
+            payload = json.loads(row["payload"]) if row["payload"] else {}
+            positions.append(
+                Position(
+                    symbol=row["symbol"],
+                    underlying=row["underlying"],
+                    asset_class=AssetClass(row["asset_class"]),
+                    qty=float(row["qty"]),
+                    avg_entry_price=float(row["avg_entry_price"]),
+                    current_price=float(row["current_price"]),
+                    market_value=float(row["market_value"]),
+                    unrealized_pl=float(row["unrealized_pl"]),
+                    strategy_id=row["strategy_id"],
+                    metadata=payload.get("metadata", {}) if isinstance(payload, dict) else {},
+                )
+            )
+        return positions
 
     def get_intraday_metrics(self, broker: str, account: AccountSnapshot) -> dict[str, float | int]:
         today = utc_now().date().isoformat()

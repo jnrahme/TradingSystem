@@ -30,6 +30,7 @@ First runnable vertical slice:
 - `src/new_trading_system/services/worker.py`: paper worker orchestration
 - `src/new_trading_system/services/execution_engine.py`: intent-to-broker execution path with ledger-backed intraday checks
 - `src/new_trading_system/services/risk_engine.py`: paper-only, opening-vs-closing, whitelist, and cumulative-risk guardrails extracted from the legacy gateway
+- `src/new_trading_system/services/reconciliation.py`: position reconciliation, verification, and stale-order handling
 - `src/new_trading_system/services/portfolio_ledger.py`: canonical SQLite-backed ledger and dashboard summary
 - `src/new_trading_system/adapters/internal_paper.py`: internal simulator broker
 - `src/new_trading_system/adapters/alpaca_paper.py`: Alpaca paper broker and market-data adapter
@@ -42,9 +43,17 @@ Quick start:
 - `python3 -m pip install -e ".[dev]"`
 - `PYTHONPATH=src python3 -m new_trading_system.cli run-once --broker internal-paper`
 - `PYTHONPATH=src python3 -m new_trading_system.cli run-once --broker internal-paper --execute`
+- `PYTHONPATH=src python3 -m new_trading_system.cli reconcile --broker internal-paper`
+- `PYTHONPATH=src python3 -m new_trading_system.cli verify --broker internal-paper`
 - `PYTHONPATH=src python3 -m new_trading_system.cli run-once --broker alpaca-paper`
+- `PYTHONPATH=src python3 -m new_trading_system.cli verify --broker alpaca-paper`
 - `PYTHONPATH=src python3 -m new_trading_system.cli dashboard`
 - `pytest -q`
+
+Worktree note:
+
+- paper credentials stay in the git-ignored root `.env.paper.local`
+- worktree checkouts automatically fall back to that root env file, so feature branches can verify Alpaca paper behavior without copying secrets into each worktree
 
 Top-level layout:
 

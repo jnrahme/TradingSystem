@@ -36,7 +36,9 @@
 - [x] Inventory every high-value legacy strategy, script family, and workflow into extract / redesign / reference-only / discard buckets.
 - [x] Port the strongest risk rules from `trade_gateway.py` into the new risk engine.
 - [x] Port the strongest opening-versus-closing order safety rules from `mandatory_trade_gate.py`.
-- [ ] Collapse useful legacy verification and sync scripts into a smaller new CLI surface.
+- [x] Collapse useful legacy verification and sync scripts into a smaller new CLI surface.
+- [ ] Finish Alpaca order lifecycle parity with stronger fill reconciliation, stale-order cleanup policy, and recovery hooks.
+- [ ] Finish legacy iron-condor lifecycle parity beyond the current entry-only slice.
 - [ ] Define the reduced workflow set that replaces the useful legacy GitHub Actions without recreating the old workflow sprawl.
 
 ## Phase 3 — Research Lab
@@ -70,6 +72,7 @@
 - [ ] Build a first pass on IBKR adapter requirements.
 - [ ] Build a first pass on Coinbase adapter requirements.
 - [ ] Write reconciliation requirements for broker fills versus canonical ledger.
+- [x] Add first-pass broker-versus-ledger reconcile and verify commands with stale-order checks.
 - [x] Ship the first runnable paper-only vertical slice with worker, ledger, internal paper broker, Alpaca paper adapter, and legacy options strategy plugin.
 
 ## Phase 7 — Dashboard and Operators

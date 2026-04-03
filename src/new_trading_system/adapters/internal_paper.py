@@ -10,13 +10,16 @@ from ..broker_sdk import BrokerAdapter
 from ..models import (
     AccountSnapshot,
     AssetClass,
+    BrokerOrder,
     MarketClock,
     OptionContract,
+    OptionLeg,
     OrderIntent,
     OrderResult,
     OrderStatus,
     Position,
     Quote,
+    Side,
 )
 from ..occ import build_occ_symbol, calculate_condor_strikes, calculate_target_expiry, parse_occ_symbol
 from ..time_utils import utc_now
@@ -50,6 +53,7 @@ class InternalPaperBrokerAdapter(BrokerAdapter):
         self.starting_cash = starting_cash
         self.cash = starting_cash
         self._positions: dict[str, _PaperPosition] = {}
+        self._orders: dict[str, BrokerOrder] = {}
 
     @classmethod
     def from_state_file(
@@ -73,6 +77,36 @@ class InternalPaperBrokerAdapter(BrokerAdapter):
             )
             for item in payload.get("positions", [])
         }
+        broker._orders = {
+            item["order_id"]: BrokerOrder(
+                order_id=item["order_id"],
+                broker=item["broker"],
+                status=item["status"],
+                symbol=item.get("symbol"),
+                side=item.get("side"),
+                order_type=item.get("order_type"),
+                quantity=float(item["quantity"]) if item.get("quantity") is not None else None,
+                filled_quantity=(
+                    float(item["filled_quantity"]) if item.get("filled_quantity") is not None else None
+                ),
+                limit_price=float(item["limit_price"]) if item.get("limit_price") is not None else None,
+                created_at=datetime.fromisoformat(item["created_at"]),
+                submitted_at=(
+                    datetime.fromisoformat(item["submitted_at"]) if item.get("submitted_at") else None
+                ),
+                filled_at=datetime.fromisoformat(item["filled_at"]) if item.get("filled_at") else None,
+                legs=[
+                    OptionLeg(
+                        symbol=leg["symbol"],
+                        side=Side(leg["side"]),
+                        ratio_qty=int(leg["ratio_qty"]),
+                    )
+                    for leg in item.get("legs", [])
+                ],
+                raw=item.get("raw", {}),
+            )
+            for item in payload.get("orders", [])
+        }
         return broker
 
     def save_state(self, state_path: Path) -> None:
@@ -84,6 +118,23 @@ class InternalPaperBrokerAdapter(BrokerAdapter):
                     "asset_class": position.asset_class.value,
                 }
                 for position in self._positions.values()
+            ],
+            "orders": [
+                {
+                    **asdict(order),
+                    "created_at": order.created_at.isoformat(),
+                    "submitted_at": order.submitted_at.isoformat() if order.submitted_at else None,
+                    "filled_at": order.filled_at.isoformat() if order.filled_at else None,
+                    "legs": [
+                        {
+                            "symbol": leg.symbol,
+                            "side": leg.side.value,
+                            "ratio_qty": leg.ratio_qty,
+                        }
+                        for leg in order.legs
+                    ],
+                }
+                for order in self._orders.values()
             ],
         }
         state_path.write_text(json.dumps(payload, indent=2, sort_keys=True))
@@ -196,7 +247,7 @@ class InternalPaperBrokerAdapter(BrokerAdapter):
                         del self._positions[leg.symbol]
                     else:
                         existing.qty = new_qty
-            return OrderResult(
+            result = OrderResult(
                 order_id=order_id,
                 intent_id=intent.intent_id,
                 strategy_id=intent.strategy_id,
@@ -207,6 +258,23 @@ class InternalPaperBrokerAdapter(BrokerAdapter):
                 fill_price=fill_price,
                 raw={"adapter": self.name},
             )
+            self._orders[order_id] = BrokerOrder(
+                order_id=order_id,
+                broker=self.name,
+                status="filled",
+                symbol=intent.symbol,
+                side=intent.side.value,
+                order_type=intent.order_type.value,
+                quantity=float(intent.quantity),
+                filled_quantity=float(intent.quantity),
+                limit_price=intent.limit_price,
+                created_at=submitted_at,
+                submitted_at=submitted_at,
+                filled_at=submitted_at,
+                legs=[OptionLeg(symbol=leg.symbol, side=leg.side, ratio_qty=leg.ratio_qty) for leg in intent.legs],
+                raw={"adapter": self.name},
+            )
+            return result
 
         quote = self.get_stock_quote(intent.symbol).midpoint
         signed_qty = intent.quantity if intent.side.value == "buy" else -intent.quantity
@@ -219,7 +287,7 @@ class InternalPaperBrokerAdapter(BrokerAdapter):
             avg_entry_price=quote,
             strategy_id=intent.strategy_id,
         )
-        return OrderResult(
+        result = OrderResult(
             order_id=order_id,
             intent_id=intent.intent_id,
             strategy_id=intent.strategy_id,
@@ -230,6 +298,41 @@ class InternalPaperBrokerAdapter(BrokerAdapter):
             fill_price=quote,
             raw={"adapter": self.name},
         )
+        self._orders[order_id] = BrokerOrder(
+            order_id=order_id,
+            broker=self.name,
+            status="filled",
+            symbol=intent.symbol,
+            side=intent.side.value,
+            order_type=intent.order_type.value,
+            quantity=float(intent.quantity),
+            filled_quantity=float(intent.quantity),
+            limit_price=intent.limit_price,
+            created_at=submitted_at,
+            submitted_at=submitted_at,
+            filled_at=submitted_at,
+            raw={"adapter": self.name},
+        )
+        return result
+
+    def list_orders(self, status: str = "all", limit: int = 200) -> list[BrokerOrder]:
+        orders = sorted(self._orders.values(), key=lambda order: order.created_at, reverse=True)
+        if status != "all":
+            normalized = status.strip().lower()
+            if normalized == "open":
+                orders = [order for order in orders if order.status not in {"filled", "canceled", "cancelled", "rejected"}]
+            else:
+                orders = [order for order in orders if order.status == normalized]
+        return orders[:limit]
+
+    def cancel_order(self, order_id: str) -> dict[str, str | bool]:
+        order = self._orders.get(order_id)
+        if order is None:
+            return {"cancelled": False, "order_id": order_id, "reason": "not_found"}
+        if order.status in {"filled", "canceled", "cancelled", "rejected"}:
+            return {"cancelled": False, "order_id": order_id, "reason": "not_open"}
+        order.status = "canceled"
+        return {"cancelled": True, "order_id": order_id}
 
 
 def build_demo_snapshot(now: datetime | None = None, spy_price: float = 650.0) -> InternalPaperSnapshot:

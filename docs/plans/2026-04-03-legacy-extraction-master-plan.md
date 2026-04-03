@@ -17,7 +17,7 @@ See `docs/legacy-inventory.md` for the concrete bucket-by-bucket extraction list
 Measured on 2026-04-03:
 
 - Legacy repo size: about `1.2G`
-- New repo size: about `3.8M`
+- New repo checkout remains in the single-digit megabytes before counting extra local worktrees
 - Legacy `src` size: about `3.4M`
 - Legacy `scripts` size: about `2.0M`
 - Legacy `data` size: about `257M`
@@ -284,11 +284,14 @@ Completed on 2026-04-03:
 
 1. Ported the strongest risk rules from `trade_gateway.py` into `risk_engine.py`
 2. Ported the mandatory opening-vs-closing order safety concepts from `mandatory_trade_gate.py`
+3. Collapsed useful legacy verification and sync scripts into first-pass `reconcile` and `verify` CLI commands
+4. Added broker-versus-ledger reconciliation plus stale-order verification and cancellation hooks
+5. Made worktree checkouts reuse the root `.env.paper.local` so paper-broker verification still works on isolated branches
 
 Next:
 
-3. Collapse useful verification and sync scripts into a smaller new CLI surface
-4. Build Alpaca reconciliation and stale-order cleanup
-5. Define the broker capability registry
-6. Port VIX mean reversion logic into the new strategy and market layer
-7. Start replay-lab scaffolding for strategy promotion
+6. Finish iron-condor lifecycle parity beyond the current entry-only slice
+7. Define the broker capability registry
+8. Port VIX mean reversion logic into the new strategy and market layer
+9. Start replay-lab scaffolding for strategy promotion
+10. Define the reduced workflow set that replaces the useful legacy GitHub Actions

@@ -5,7 +5,10 @@ import json
 from pathlib import Path
 
 from .config import RuntimeConfig, project_root
+from .services.portfolio_ledger import PortfolioLedger
+from .services.reconciliation import ReconciliationService
 from .services.worker import PaperTradingWorker, WorkerLockBusyError
+from .services.worker import build_broker
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -26,6 +29,16 @@ def build_parser() -> argparse.ArgumentParser:
 
     dashboard = subparsers.add_parser("dashboard", help="print the latest dashboard summary")
     dashboard.add_argument("--path", default=None)
+
+    reconcile = subparsers.add_parser("reconcile", help="sync broker state into the canonical ledger")
+    reconcile.add_argument("--broker", default=None, choices=["internal-paper", "alpaca-paper"])
+
+    verify = subparsers.add_parser(
+        "verify", help="compare broker state against the ledger and optionally cancel stale orders"
+    )
+    verify.add_argument("--broker", default=None, choices=["internal-paper", "alpaca-paper"])
+    verify.add_argument("--stale-order-age-minutes", type=int, default=60)
+    verify.add_argument("--cancel-stale", action="store_true")
     return parser
 
 
@@ -43,6 +56,23 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     broker = args.broker or config.default_broker
+    if args.command in {"reconcile", "verify"}:
+        reconciliation = ReconciliationService(
+            broker=build_broker(config, broker),
+            ledger=PortfolioLedger(config.state_db_path),
+        )
+        if args.command == "reconcile":
+            report = reconciliation.reconcile(summary_path=config.dashboard_summary_path)
+            print(json.dumps(report, indent=2))
+            return 0
+
+        report = reconciliation.verify(
+            stale_order_age_minutes=args.stale_order_age_minutes,
+            cancel_stale=args.cancel_stale,
+        )
+        print(json.dumps(report, indent=2))
+        return 0 if report["ok"] else 1
+
     worker = PaperTradingWorker(config=config, broker_name=broker)
     try:
         if args.command == "run-once":

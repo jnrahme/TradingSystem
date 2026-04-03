@@ -9,6 +9,13 @@ def project_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
+def env_file_candidates(root: Path) -> list[Path]:
+    candidates = [root / ".env.paper.local"]
+    if root.parent.name == ".worktrees":
+        candidates.append(root.parent.parent / ".env.paper.local")
+    return candidates
+
+
 def load_env_file(path: Path) -> dict[str, str]:
     values: dict[str, str] = {}
     if not path.exists():
@@ -48,7 +55,8 @@ class RuntimeConfig:
     @classmethod
     def from_env(cls, root: Path | None = None) -> "RuntimeConfig":
         root_path = root or project_root()
-        apply_env_file(root_path / ".env.paper.local")
+        for env_path in env_file_candidates(root_path):
+            apply_env_file(env_path)
 
         state_db_path = root_path / "var" / "trading-state.sqlite3"
         dashboard_summary_path = root_path / "apps" / "dashboard" / "data" / "summary.json"

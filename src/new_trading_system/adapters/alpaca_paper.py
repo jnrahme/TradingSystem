@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -10,13 +10,16 @@ from ..broker_sdk import BrokerAdapter
 from ..models import (
     AccountSnapshot,
     AssetClass,
+    BrokerOrder,
     MarketClock,
     OptionContract,
+    OptionLeg,
     OrderIntent,
     OrderResult,
     OrderStatus,
     Position,
     Quote,
+    Side,
 )
 from ..occ import parse_occ_symbol
 
@@ -52,6 +55,12 @@ class AlpacaPaperBrokerAdapter(BrokerAdapter):
         request = Request(full_url, data=data, headers=self._headers(), method=method.upper())
         with urlopen(request) as response:
             return json.loads(response.read().decode())
+
+    @staticmethod
+    def _parse_timestamp(raw_value: str | None) -> datetime | None:
+        if not raw_value:
+            return None
+        return datetime.fromisoformat(raw_value.replace("Z", "+00:00")).replace(tzinfo=None)
 
     def get_clock(self) -> MarketClock:
         payload = self._request("GET", f"{self.trading_base_url}/clock")
@@ -187,21 +196,60 @@ class AlpacaPaperBrokerAdapter(BrokerAdapter):
     def submit_order(self, intent: OrderIntent) -> OrderResult:
         payload = self.preview_payload(intent)
         response = self._request("POST", f"{self.trading_base_url}/orders", payload=payload)
-        filled_at = None
-        if response.get("filled_at"):
-            filled_at = datetime.fromisoformat(response["filled_at"].replace("Z", "+00:00")).replace(
-                tzinfo=None
-            )
+        filled_at = self._parse_timestamp(response.get("filled_at"))
         return OrderResult(
             order_id=response["id"],
             intent_id=intent.intent_id,
             strategy_id=intent.strategy_id,
             broker=self.name,
             status=OrderStatus.FILLED if response.get("status") == "filled" else OrderStatus.ACCEPTED,
-            submitted_at=datetime.fromisoformat(response["submitted_at"].replace("Z", "+00:00")).replace(
-                tzinfo=None
-            ),
+            submitted_at=self._parse_timestamp(response["submitted_at"]) or datetime.now(UTC).replace(tzinfo=None),
             filled_at=filled_at,
             fill_price=float(response["filled_avg_price"]) if response.get("filled_avg_price") else None,
             raw=response,
         )
+
+    def list_orders(self, status: str = "all", limit: int = 200) -> list[BrokerOrder]:
+        payload = self._request(
+            "GET",
+            f"{self.trading_base_url}/orders",
+            params={"status": status, "limit": limit, "nested": "true"},
+        )
+        orders: list[BrokerOrder] = []
+        for item in payload if isinstance(payload, list) else []:
+            legs = [
+                OptionLeg(
+                    symbol=leg.get("symbol", ""),
+                    side=Side(leg.get("side", "buy")),
+                    ratio_qty=int(leg.get("ratio_qty", 1) or 1),
+                )
+                for leg in item.get("legs", []) or []
+                if leg.get("symbol")
+            ]
+            orders.append(
+                BrokerOrder(
+                    order_id=item["id"],
+                    broker=self.name,
+                    status=str(item.get("status", "unknown")),
+                    symbol=item.get("symbol"),
+                    side=item.get("side"),
+                    order_type=item.get("type"),
+                    quantity=float(item["qty"]) if item.get("qty") is not None else None,
+                    filled_quantity=(
+                        float(item["filled_qty"]) if item.get("filled_qty") is not None else None
+                    ),
+                    limit_price=float(item["limit_price"]) if item.get("limit_price") else None,
+                    created_at=self._parse_timestamp(item.get("created_at"))
+                    or self._parse_timestamp(item.get("submitted_at"))
+                    or datetime.now(UTC).replace(tzinfo=None),
+                    submitted_at=self._parse_timestamp(item.get("submitted_at")),
+                    filled_at=self._parse_timestamp(item.get("filled_at")),
+                    legs=legs,
+                    raw=item,
+                )
+            )
+        return orders
+
+    def cancel_order(self, order_id: str) -> dict[str, str | bool]:
+        self._request("DELETE", f"{self.trading_base_url}/orders/{order_id}")
+        return {"cancelled": True, "order_id": order_id}
