@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://newtradingsystem.local/schemas/trading-event.schema.json",
+  "title": "TradingEventEnvelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_id",
+    "event_type",
+    "occurred_at",
+    "producer",
+    "payload"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "event_id": {
+      "type": "string"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "market_data",
+        "strategy_signal",
+        "risk_decision",
+        "order_submitted",
+        "order_rejected",
+        "order_cancelled",
+        "fill_received",
+        "position_updated",
+        "pnl_updated",
+        "promotion_state_changed",
+        "alert_raised"
+      ]
+    },
+    "correlation_id": {
+      "type": "string"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "producer": {
+      "type": "string"
+    },
+    "payload": {
+      "type": "object"
+    }
+  }
+}

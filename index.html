@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NewTradingSystem Master Plan</title>
+    <style>
+      :root {
+        --bg: #f6f4ef;
+        --panel: #fffdf8;
+        --panel-strong: #ffffff;
+        --ink: #1f2933;
+        --muted: #5d6b79;
+        --accent: #0f5c52;
+        --accent-2: #d97706;
+        --accent-3: #a73d23;
+        --line: #d9d2c5;
+        --shadow: 0 18px 60px rgba(31, 41, 51, 0.09);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(15, 92, 82, 0.08), transparent 28%),
+          radial-gradient(circle at top right, rgba(217, 119, 6, 0.08), transparent 25%),
+          linear-gradient(180deg, #fbfaf6 0%, #f3efe7 100%);
+        font-family: "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
+        line-height: 1.55;
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      code,
+      pre {
+        font-family: "IBM Plex Mono", "SFMono-Regular", "Cascadia Code", monospace;
+      }
+
+      .page {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 40px 24px 80px;
+      }
+
+      .hero {
+        background: linear-gradient(135deg, rgba(15, 92, 82, 0.94), rgba(21, 43, 71, 0.95));
+        color: #f4f7f5;
+        padding: 40px;
+        border-radius: 28px;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero::after {
+        content: "";
+        position: absolute;
+        inset: auto -80px -120px auto;
+        width: 320px;
+        height: 320px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .eyebrow {
+        font-size: 0.85rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        opacity: 0.78;
+        margin-bottom: 10px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        font-size: clamp(2.3rem, 4vw, 4.1rem);
+      }
+
+      h2 {
+        font-size: clamp(1.8rem, 2.6vw, 2.5rem);
+        margin: 0 0 16px;
+      }
+
+      h3 {
+        font-size: 1.35rem;
+        margin: 0 0 12px;
+      }
+
+      .hero p {
+        max-width: 900px;
+        margin: 0;
+        color: rgba(244, 247, 245, 0.92);
+        font-size: 1.06rem;
+      }
+
+      .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 22px;
+      }
+
+      .chip {
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-size: 0.92rem;
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .toc {
+        margin: 26px 0 24px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+      }
+
+      .toc a {
+        text-decoration: none;
+        padding: 14px 16px;
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(15, 92, 82, 0.12);
+        border-radius: 16px;
+        color: var(--ink);
+        box-shadow: 0 10px 24px rgba(31, 41, 51, 0.05);
+      }
+
+      section {
+        margin-top: 28px;
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px solid rgba(31, 41, 51, 0.08);
+        border-radius: 24px;
+        padding: 28px;
+        box-shadow: 0 12px 38px rgba(31, 41, 51, 0.04);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+      }
+
+      .card {
+        background: var(--panel-strong);
+        border: 1px solid rgba(31, 41, 51, 0.08);
+        border-radius: 18px;
+        padding: 18px;
+      }
+
+      .card strong {
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      .callout {
+        padding: 18px 20px;
+        border-left: 5px solid var(--accent-2);
+        background: linear-gradient(90deg, rgba(217, 119, 6, 0.08), rgba(255, 255, 255, 0.7));
+        border-radius: 16px;
+      }
+
+      .callout strong {
+        color: var(--accent-3);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 14px;
+        font-size: 0.96rem;
+      }
+
+      th,
+      td {
+        text-align: left;
+        vertical-align: top;
+        padding: 12px 10px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      th {
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      pre {
+        white-space: pre-wrap;
+        background: #13232a;
+        color: #eef3f1;
+        border-radius: 18px;
+        padding: 18px;
+        overflow-x: auto;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .columns {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 18px;
+      }
+
+      .metric {
+        border-top: 4px solid var(--accent);
+      }
+
+      .metric .value {
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 8px;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      ul {
+        padding-left: 18px;
+      }
+
+      li + li {
+        margin-top: 8px;
+      }
+
+      .footnotes li + li {
+        margin-top: 12px;
+      }
+
+      .small {
+        font-size: 0.92rem;
+      }
+
+      @media (max-width: 720px) {
+        .page {
+          padding: 18px 14px 48px;
+        }
+
+        .hero,
+        section {
+          padding: 22px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="hero">
+        <div class="eyebrow">NewTradingSystem / Master Plan / April 2026</div>
+        <h1>Multi-Strategy Trading Platform Redesign</h1>
+        <p>
+          This redesign turns the current trading codebase into a reusable platform where the
+          trading system and the strategy brain are isolated on purpose. The platform owns data,
+          execution, risk, portfolio state, replay, promotion, and dashboards. Strategies become
+          plugins that can be attached, paper traded, replayed, promoted, and compared without
+          rewriting the rest of the stack.
+        </p>
+        <div class="hero-meta">
+          <div class="chip">Primary Goal: Massive Scale Without Architectural Drift</div>
+          <div class="chip">Operating Model: Broker-Agnostic + Strategy Plugins</div>
+          <div class="chip">Default Rollout: Replay → Internal Paper → Broker Paper → Live Canary</div>
+        </div>
+      </header>
+
+      <nav class="toc">
+        <a href="#answer">Final Answer</a>
+        <a href="#market">Current Market Reality</a>
+        <a href="#platforms">Trading Platform Decision</a>
+        <a href="#architecture">Target Architecture</a>
+        <a href="#isolation">Isolation Boundaries</a>
+        <a href="#intelligence">Strategy Intelligence</a>
+        <a href="#strategies">Strategy Families</a>
+        <a href="#dashboard">Dashboard</a>
+        <a href="#repo">Repo Layout</a>
+        <a href="#phases">Build Phases</a>
+        <a href="#references">References</a>
+      </nav>
+
+      <section id="answer">
+        <h2>Final Answer</h2>
+        <div class="grid">
+          <div class="card">
+            <strong>Are we using the correct trading platform?</strong>
+            No single broker is the right answer for options, penny stocks, and crypto all at
+            once. The correct answer is a broker-agnostic core with multiple adapters. Use one
+            internal paper broker as the primary testing venue, then route live orders through the
+            best broker per asset class.
+          </div>
+          <div class="card">
+            <strong>Is the system solid?</strong>
+            Not yet, if strategy logic can still touch execution and file-based state directly.
+            A solid system has hard boundaries: immutable event history, canonical portfolio
+            ledger, broker reconciliation, risk at multiple layers, and promotion gates between
+            research, paper, and live.
+          </div>
+          <div class="card">
+            <strong>How should we trade today in order to win?</strong>
+            Start with liquid, data-rich, mechanically testable edges. That means index and ETF
+            options first, major crypto second, penny stocks last and paper-only until the fraud,
+            liquidity, and halt filters prove themselves.
+          </div>
+          <div class="card">
+            <strong>Best architecture choice</strong>
+            A modular monolith with event-driven seams is the best first architecture. It keeps the
+            system auditable and understandable now, while preserving a clean path to split out
+            heavy domains later.
+          </div>
+        </div>
+        <div class="callout" style="margin-top: 18px;">
+          <strong>Recommended platform thesis:</strong> build the platform around an internal
+          execution simulator, a strategy plugin SDK, a portfolio ledger, a risk engine, and a
+          broker capability registry. Do not hard-wire the business to Alpaca, IBKR, Coinbase, or
+          any single venue.
+        </div>
+      </section>
+
+      <section id="market">
+        <h2>Current Market Reality</h2>
+        <div class="grid">
+          <div class="card metric">
+            <div class="value">$655.83</div>
+            <strong>SPY</strong>
+            <div class="small muted">
+              Latest quoted price captured on Friday, April 3, 2026, with intraday volume above
+              68 million shares.
+            </div>
+          </div>
+          <div class="card metric">
+            <div class="value">$66,592</div>
+            <strong>BTC</strong>
+            <div class="small muted">
+              Latest quoted price captured on Friday, April 3, 2026.
+            </div>
+          </div>
+          <div class="card metric">
+            <div class="value">24.54</div>
+            <strong>VIX</strong>
+            <div class="small muted">
+              Latest value visible in the official FRED VIX daily series on April 1, 2026.
+            </div>
+          </div>
+          <div class="card metric">
+            <div class="value">3.5% to 3.75%</div>
+            <strong>Fed Funds Target Range</strong>
+            <div class="small muted">
+              Confirmed in the March 18, 2026 FOMC statement implementation note.
+            </div>
+          </div>
+        </div>
+        <div class="columns" style="margin-top: 18px;">
+          <div class="card">
+            <h3>What the options market is saying</h3>
+            <p>
+              Cboe reported that total volume across its four options exchanges reached
+              4.6 billion contracts in 2025, with 18.4 million contracts of average daily volume,
+              marking a sixth straight record year. Cboe also described the broader listed-options
+              market as having topped 15.2 billion contracts in 2025, 26% above 2024.
+            </p>
+            <p>
+              In Cboe's March 2026 index commentary, dynamic buy-write and put-write indexes
+              outperformed the S&amp;P 500 during a volatile down month because option income
+              cushioned losses.
+            </p>
+          </div>
+          <div class="card">
+            <h3>What that means for strategy prioritization</h3>
+            <p>
+              Liquid options and major crypto venues have cleaner data, clearer fills, better
+              automation surfaces, and stronger market structure than penny stocks. Penny and
+              microcap names remain unusually exposed to manipulation, scarce public information,
+              and low liquidity, which is exactly why they belong behind extra filters and later
+              rollout gates.
+            </p>
+            <p>
+              The first live-capital strategies should therefore be liquid, rules-driven, and easy
+              to replay: index/ETF options, large-cap equity strategies, and major crypto pairs.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="platforms">
+        <h2>Trading Platform Decision</h2>
+        <p>
+          The right answer is not “pick one broker forever.” The right answer is “build a broker
+          abstraction, then use the strongest venue per job.” Public broker docs show real
+          differences in asset coverage, paper behavior, market data, and order models.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Platform</th>
+              <th>What the docs show</th>
+              <th>Strength</th>
+              <th>Limitation</th>
+              <th>Verdict</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>IBKR</strong></td>
+              <td>
+                Public IBKR materials and API docs cover stocks, options, futures, forex, bonds,
+                paper trading, and API automation.
+              </td>
+              <td>Best long-term core for broad multi-asset coverage.</td>
+              <td>Operationally heavier than simpler retail APIs.</td>
+              <td>Use as the main non-crypto production adapter.</td>
+            </tr>
+            <tr>
+              <td><strong>Alpaca</strong></td>
+              <td>
+                Public docs show one Trading API across equities, crypto, and options, with paper
+                options enabled by default and multi-leg options supported.
+              </td>
+              <td>Fastest early iteration path for U.S. equities, crypto, and options.</td>
+              <td>Not broad enough to become the only forever venue.</td>
+              <td>Use as an early paper and dev adapter, not the sole platform.</td>
+            </tr>
+            <tr>
+              <td><strong>Tradier</strong></td>
+              <td>
+                Public docs emphasize U.S. equities and options, a sandbox, full trading API
+                coverage, delayed sandbox market data, and support for complex multi-leg options.
+              </td>
+              <td>Excellent options-focused broker adapter candidate.</td>
+              <td>U.S. equities and options only.</td>
+              <td>Use as optional options specialist adapter.</td>
+            </tr>
+            <tr>
+              <td><strong>tastytrade</strong></td>
+              <td>
+                Public API docs cover equities, equity options, futures, future options, crypto,
+                complex orders, and a sandbox that resets daily with delayed quotes.
+              </td>
+              <td>Strong derivative coverage and retail-friendly API surface.</td>
+              <td>Sandbox behavior is still sandbox behavior, not a real execution model.</td>
+              <td>Good options and futures adapter candidate.</td>
+            </tr>
+            <tr>
+              <td><strong>TradeStation</strong></td>
+              <td>
+                Public docs cover stocks, options, futures, streaming, and a SIM environment that
+                is API-compatible but uses instant fills.
+              </td>
+              <td>Strong U.S. multi-market broker for an adapter pool.</td>
+              <td>SIM instant fills are not realistic enough to be the truth layer.</td>
+              <td>Useful adapter, especially for U.S. futures and options workflows.</td>
+            </tr>
+            <tr>
+              <td><strong>Coinbase</strong></td>
+              <td>
+                Public docs cover Advanced Trade APIs and 24x7 crypto futures support for select
+                derivatives products.
+              </td>
+              <td>Best crypto-specific venue in this architecture set.</td>
+              <td>Crypto-focused, so it should not be your only venue.</td>
+              <td>Use as the primary crypto adapter.</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout" style="margin-top: 18px;">
+          <strong>Platform recommendation:</strong> implement adapters in this order:
+          internal-paper venue first, Alpaca second for fast dev, IBKR third for broad
+          production breadth, Coinbase fourth for crypto, then one derivatives specialist such as
+          Tradier or tastytrade if needed.
+        </div>
+      </section>
+
+      <section id="architecture">
+        <h2>Target Architecture</h2>
+        <p>
+          The winning architecture is a <strong>modular monolith with event-driven seams</strong>.
+          That gives us one understandable codebase today, while preserving clean domain
+          boundaries so heavy components can be split out later without rewriting every strategy.
+        </p>
+        <pre>
+Control Plane
+  -> strategy registry
+  -> config + secrets references
+  -> promotion gates
+  -> kill switches
+  -> schedules
+
+Market Data Layer
+  -> broker feeds
+  -> exchange feeds
+  -> news / corporate actions / calendars
+  -> normalized feature views
+
+Strategy Runtime
+  -> loads strategy plugins
+  -> provides read-only context
+  -> collects intents
+  -> stores strategy state snapshots
+
+Risk Engine
+  -> pre-trade risk
+  -> intraday risk
+  -> portfolio risk
+  -> venue / product / exposure limits
+
+Execution Engine
+  -> broker capability routing
+  -> order translation
+  -> lifecycle management
+  -> reconciliation
+
+Portfolio Ledger
+  -> canonical positions
+  -> fills
+  -> realized/unrealized PnL
+  -> fees / slippage / borrow / assignment
+
+Research + Replay
+  -> backtests
+  -> event replay
+  -> shadow runs
+  -> parameter experiments
+
+Model Lab + Policy Registry
+  -> regime models
+  -> parameter policies
+  -> model serving
+  -> experiment tracking
+  -> strategy copilots
+
+Dashboard + Operator Console
+  -> PnL
+  -> strategy scorecards
+  -> broker health
+  -> incidents
+  -> promotion workflow
+        </pre>
+
+        <div class="columns">
+          <div class="card">
+            <h3>Why this is better than a microservices-first design</h3>
+            <p>
+              Microservices would create extra latency, deployment complexity, and coordination
+              overhead before the platform has stable contracts. Right now the winning move is to
+              isolate the domains in code and data first, not to distribute everything on day one.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Why this is better than a single giant script or notebook stack</h3>
+            <p>
+              A giant quant monolith collapses strategy, execution, and state into one place. That
+              is fast at first, but it makes it almost impossible to promote strategies safely,
+              compare them fairly, or reason about broker-specific failures.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="isolation">
+        <h2>Isolation Boundaries</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Domain</th>
+              <th>Owns</th>
+              <th>Must Not Know</th>
+              <th>Reusable?</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Strategy SDK</strong></td>
+              <td>Strategy manifest, context contract, state contract, intent contract.</td>
+              <td>Broker APIs, database internals, deployment details.</td>
+              <td>Yes. Reused by every strategy family.</td>
+            </tr>
+            <tr>
+              <td><strong>Strategy Runtime</strong></td>
+              <td>Plugin loading, event delivery, state snapshots, run orchestration.</td>
+              <td>Venue-specific order payloads and secret handling.</td>
+              <td>Yes. Same runtime for options, penny, and crypto.</td>
+            </tr>
+            <tr>
+              <td><strong>Risk Engine</strong></td>
+              <td>Limits, exposure checks, kill switches, drawdown rules, product gates.</td>
+              <td>Strategy alpha logic and UI rendering.</td>
+              <td>Yes. Global and strategy-level policy reuse.</td>
+            </tr>
+            <tr>
+              <td><strong>Execution Engine</strong></td>
+              <td>Routing, order translation, retries, reconciliation, broker state sync.</td>
+              <td>Alpha generation and feature engineering.</td>
+              <td>Yes. Shared across all strategies and brokers.</td>
+            </tr>
+            <tr>
+              <td><strong>Portfolio Ledger</strong></td>
+              <td>Canonical positions, fills, PnL, capital accounting.</td>
+              <td>Strategy heuristics and broker authentication flow.</td>
+              <td>Yes. Core source of truth for all dashboards.</td>
+            </tr>
+            <tr>
+              <td><strong>Market Data</strong></td>
+              <td>Normalization, enrichment, replay snapshots, feature surfaces.</td>
+              <td>Order execution and strategy state mutation.</td>
+              <td>Yes. Shared by all runtimes and research tools.</td>
+            </tr>
+            <tr>
+              <td><strong>Replay / Simulator</strong></td>
+              <td>Historical execution replay, fill models, latency/slippage assumptions.</td>
+              <td>Live broker account wiring.</td>
+              <td>Yes. Mandatory for every strategy path.</td>
+            </tr>
+            <tr>
+              <td><strong>Dashboard</strong></td>
+              <td>Read models, scorecards, alerts, visual analysis.</td>
+              <td>Trade placement and state mutation.</td>
+              <td>Yes. Shared operator and research analytics surface.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout" style="margin-top: 18px;">
+          <strong>Most important isolation rule:</strong> strategies do not place orders. They emit
+          intents such as <code>OpenPosition</code>, <code>AdjustPosition</code>,
+          <code>ExitPosition</code>, or <code>TargetExposure</code>. The system decides whether
+          those intents become real broker orders.
+        </div>
+      </section>
+
+      <section id="plugin-model">
+        <h2>Strategy Plugin Model</h2>
+        <p>
+          Every strategy family must conform to one contract. A strategy can be stateful, but it
+          must be stateful inside a versioned namespace managed by the runtime, not by writing to
+          random files.
+        </p>
+        <pre>
+Strategy Manifest
+  - strategy_id
+  - version
+  - asset_classes
+  - required_data
+  - required_capabilities
+  - permitted_accounts
+  - promotion_policy
+  - risk_profile
+
+Runtime Hooks
+  - on_start(context)
+  - on_market_event(context, event)
+  - on_bar(context, bar)
+  - on_fill(context, fill_event)
+  - on_timer(context, clock_event)
+  - on_stop(context)
+
+Outputs
+  - OrderIntent[]
+  - TargetExposure[]
+  - HedgeIntent[]
+  - ExitIntent[]
+  - StrategyAlert[]
+  - MetricSample[]
+
+No Strategy Method May
+  - call broker SDKs directly
+  - modify ledger tables directly
+  - read raw secrets
+  - bypass risk
+        </pre>
+        <div class="columns">
+          <div class="card">
+            <h3>Reusable units worth isolating immediately</h3>
+            <ul>
+              <li>Feature builders and market-regime classifiers</li>
+              <li>Option chain selection logic and Greeks normalization</li>
+              <li>Liquidity filters, spread filters, halt filters, event calendars</li>
+              <li>Position sizing models and volatility targeting modules</li>
+              <li>Trade journaling, attribution, and post-trade diagnostics</li>
+              <li>Model serving for any future ML or reinforcement-learning layer</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>What becomes strategy-specific</h3>
+            <ul>
+              <li>Signal generation and alpha logic</li>
+              <li>Entry and exit criteria</li>
+              <li>Repair logic for multi-leg positions</li>
+              <li>Preferred holding period and instrument universe</li>
+              <li>Feature subsets, model weights, and regime conditions</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="intelligence">
+        <h2>Strategy Intelligence Layer</h2>
+        <p>
+          The future “super intelligence” belongs in its own layer, not inside the execution
+          engine and not hard-coded inside every strategy. The correct design is a policy and model
+          layer that can score regimes, rank strategy variants, recommend parameters, and suggest
+          repairs or exits while still obeying the platform contracts.
+        </p>
+        <div class="columns">
+          <div class="card">
+            <h3>What the intelligence layer is allowed to do</h3>
+            <ul>
+              <li>Classify market regimes and volatility states</li>
+              <li>Score opportunities inside a strategy's allowed universe</li>
+              <li>Tune parameters inside approved limits</li>
+              <li>Rank candidate structures, exits, and hedges</li>
+              <li>Write post-trade analysis and attribution summaries</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>What it must never be allowed to do</h3>
+            <ul>
+              <li>Send broker orders directly</li>
+              <li>Change risk limits without human or policy approval</li>
+              <li>Rewrite ledger history or canonical fills</li>
+              <li>Promote itself straight to larger live capital</li>
+              <li>Bypass replay, paper, or canary stages</li>
+            </ul>
+          </div>
+        </div>
+        <pre>
+Market + Ledger History
+  -> feature store
+  -> offline training
+  -> experiment tracking
+  -> policy registry
+  -> approved policy release
+  -> strategy runtime consumption
+  -> intents
+  -> risk engine
+  -> execution engine
+
+Human operators and promotion policy remain above the model.
+        </pre>
+      </section>
+
+      <section id="strategies">
+        <h2>Strategy Families and Rollout Order</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>1. OptionsTrading</h3>
+            <p>
+              This should be the first serious production family because liquidity, data quality,
+              and mechanical execution are strongest here. Start with defined-risk index and ETF
+              strategies, event-aware premium selling, spread structures, and later volatility or
+              dispersion variants.
+            </p>
+            <p class="muted small">
+              Priority status: live-candidate after replay and paper validation.
+            </p>
+          </div>
+          <div class="card">
+            <h3>2. CryptoTrading</h3>
+            <p>
+              This should be the second family. Major crypto pairs and exchange-listed crypto
+              derivatives support continuous, rules-driven operation and clean venue APIs. Focus on
+              liquid pairs, regime-aware trend/reversion, basis, or inventory-neutral structures.
+            </p>
+            <p class="muted small">
+              Priority status: live-candidate after 24x7 risk controls are proven.
+            </p>
+          </div>
+          <div class="card">
+            <h3>3. PennyTrading</h3>
+            <p>
+              This should be a controlled experimental family, not the first live capital target.
+              It needs extra modules for fraud defense, news/catalyst verification, low-float and
+              halt handling, dilution screening, and abnormal spread/liquidity filters.
+            </p>
+            <p class="muted small">
+              Priority status: internal-paper and broker-paper first, live only after a large safety
+              sample.
+            </p>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Family</th>
+              <th>Why it belongs</th>
+              <th>Hard guardrails</th>
+              <th>Phase recommendation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>OptionsTrading</td>
+              <td>Record options activity and strong venue depth support systematic deployment.</td>
+              <td>No naked risk on day one, event filters, defined max loss, portfolio Greeks.</td>
+              <td>Phase 2</td>
+            </tr>
+            <tr>
+              <td>CryptoTrading</td>
+              <td>API surfaces and 24x7 venues make automation cleaner than penny names.</td>
+              <td>Venue diversification, weekend risk, funding/basis controls, circuit breakers.</td>
+              <td>Phase 3</td>
+            </tr>
+            <tr>
+              <td>PennyTrading</td>
+              <td>Can produce asymmetric moves, but structure risk is much higher.</td>
+              <td>No OTC at launch, catalyst required, volume floor, spread cap, fraud scoring.</td>
+              <td>Phase 4</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="data-state">
+        <h2>Data, State, and Replay</h2>
+        <div class="columns">
+          <div class="card">
+            <h3>Canonical state stores</h3>
+            <ul>
+              <li><strong>PostgreSQL</strong> for transactional state, ledger, configs, and audit metadata.</li>
+              <li><strong>Parquet in object storage</strong> for historical market data, features, and replay inputs.</li>
+              <li><strong>Redis</strong> for caches, locks, and short-lived coordination.</li>
+              <li><strong>Analytics warehouse later</strong> for high-volume read models if Postgres becomes a bottleneck.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Simulation is not optional</h3>
+            <p>
+              Broker paper accounts are useful, but they are not the truth layer. TradeStation says
+              its SIM environment uses instant fills. tastytrade resets its sandbox every 24 hours.
+              Tradier sandbox uses delayed data. IBKR paper is valuable but still a simulation.
+              The platform must therefore own an internal simulator with per-asset fill models,
+              fees, slippage, latency, borrow, assignment, and market-hours logic.
+            </p>
+          </div>
+        </div>
+        <pre>
+Research Workflow
+  historical market data
+      -> feature build
+      -> event replay
+      -> strategy decisions
+      -> simulated fills
+      -> ledger output
+      -> scorecard
+      -> promotion decision
+
+Production Workflow
+  live market data
+      -> feature build
+      -> strategy runtime
+      -> intents
+      -> risk engine
+      -> execution engine
+      -> broker adapter
+      -> fills / cancels / rejects
+      -> ledger
+      -> dashboard + alerts
+        </pre>
+      </section>
+
+      <section id="dashboard">
+        <h2>Dashboard Design</h2>
+        <div class="grid">
+          <div class="card">
+            <strong>Strategy Leaderboard</strong>
+            PnL, Sharpe-style diagnostics, win rate, expectancy, max drawdown, utilization,
+            turnover, and live-vs-sim drift.
+          </div>
+          <div class="card">
+            <strong>Portfolio Health</strong>
+            Gross and net exposure, Greeks, concentration, broker balances, cash, margin,
+            open risk, and cross-strategy correlation.
+          </div>
+          <div class="card">
+            <strong>Execution Quality</strong>
+            Slippage, rejects, cancel ratios, partial fill behavior, routing success, and
+            broker-side incidents.
+          </div>
+          <div class="card">
+            <strong>Promotion Pipeline</strong>
+            Which strategies are in replay, internal paper, broker paper, live canary, or scaled
+            live, and why each one is blocked or approved.
+          </div>
+          <div class="card">
+            <strong>Incident Review</strong>
+            Timeline view for every decision, order, risk block, and failover.
+          </div>
+          <div class="card">
+            <strong>Data Quality Monitor</strong>
+            Feed lag, gaps, stale symbols, missing Greeks, venue outages, and reconciliation drift.
+          </div>
+        </div>
+      </section>
+
+      <section id="repo">
+        <h2>Repository Layout</h2>
+        <pre>
+apps/
+  dashboard/
+  operator-console/
+
+services/
+  control-plane/
+  strategy-runtime/
+  market-data/
+  execution-engine/
+  risk-engine/
+  portfolio-ledger/
+  research-lab/
+  model-lab/
+
+packages/
+  strategy-sdk/
+  policy-sdk/
+  broker-sdk/
+  common-types/
+  event-schemas/
+
+strategies/
+  options-trading/
+  penny-trading/
+  crypto-trading/
+
+schemas/
+  strategy-manifest.schema.json
+  order-intent.schema.json
+  trading-event.schema.json
+
+infra/
+  docker/
+  terraform/
+
+tests/
+  integration/
+  replay/
+        </pre>
+        <p>
+          This structure is deliberate. Strategies sit beside the runtime, not inside it. Broker
+          integrations live in reusable packages and execution services, not inside strategy code.
+          Dashboards read from canonical state, not from ad hoc strategy files. Tests are separated
+          into historical replay and live integration because those are different engineering jobs.
+        </p>
+      </section>
+
+      <section id="phases">
+        <h2>Build Phases</h2>
+        <div class="grid">
+          <div class="card">
+            <strong>Phase 0</strong>
+            Lock the contracts: manifests, intents, events, ledger schema, promotion stages,
+            broker capabilities.
+          </div>
+          <div class="card">
+            <strong>Phase 1</strong>
+            Build the platform kernel: market data normalization, runtime, ledger, risk,
+            execution, internal paper broker, and dashboard read models.
+          </div>
+          <div class="card">
+            <strong>Phase 2</strong>
+            Ship the first serious strategy family: liquid index and ETF options.
+          </div>
+          <div class="card">
+            <strong>Phase 3</strong>
+            Add crypto with 24x7 clocks, venue failover, weekend risk, and continuous monitoring.
+          </div>
+          <div class="card">
+            <strong>Phase 4</strong>
+            Add penny strategy support only after fraud, liquidity, and halt subsystems are ready.
+          </div>
+          <div class="card">
+            <strong>Phase 5</strong>
+            Scale operationally: split heavy services, add analytics warehouse, expand brokers,
+            and introduce model-serving or ML policy layers where they truly add value.
+          </div>
+        </div>
+      </section>
+
+      <section id="rejected">
+        <h2>Alternatives Considered and Rejected</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Option</th>
+              <th>Why it sounds attractive</th>
+              <th>Why I am rejecting it</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>One broker everywhere</td>
+              <td>Simpler on paper.</td>
+              <td>Breaks as soon as you need better options support, broader markets, or crypto-specific behavior.</td>
+            </tr>
+            <tr>
+              <td>Microservices from day one</td>
+              <td>Feels “enterprise.”</td>
+              <td>Creates expensive coordination before the contracts are stable.</td>
+            </tr>
+            <tr>
+              <td>Strategies write broker orders directly</td>
+              <td>Fastest path to a first trade.</td>
+              <td>Destroys isolation, replay accuracy, and safe promotion.</td>
+            </tr>
+            <tr>
+              <td>Use broker paper accounts as the truth layer</td>
+              <td>Seems cheaper than building simulation.</td>
+              <td>Broker paper environments behave differently and hide execution-model assumptions.</td>
+            </tr>
+            <tr>
+              <td>One giant AI “super strategy” first</td>
+              <td>Feels advanced.</td>
+              <td>Without a solid platform, audit trail, and replay loop, AI just makes the failure harder to understand.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="success">
+        <h2>Definition of Success</h2>
+        <div class="columns">
+          <div class="card">
+            <h3>System success</h3>
+            <ul>
+              <li>Every decision and state transition is auditable.</li>
+              <li>Every strategy runs through the same promotion funnel.</li>
+              <li>Broker outages do not corrupt canonical portfolio state.</li>
+              <li>New strategies can be plugged in without changing the core platform.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Strategy success</h3>
+            <ul>
+              <li>Strategies are compared on identical metrics and identical capital rules.</li>
+              <li>Live drift against replay and paper is visible fast.</li>
+              <li>Capital scaling is earned through stable evidence, not hope.</li>
+              <li>Poor strategies can be paused or removed without destabilizing the system.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="references">
+        <h2>References</h2>
+        <ol class="footnotes">
+          <li>
+            SPY quote, latest trade time, intraday range, and volume from the market data finance
+            feed on April 3, 2026:
+            <a href="https://finance.yahoo.com/quote/SPY" target="_blank" rel="noreferrer">SPY market quote reference</a>.
+          </li>
+          <li>
+            BTC quote from the market data finance feed on April 3, 2026:
+            <a href="https://finance.yahoo.com/quote/BTC-USD" target="_blank" rel="noreferrer">BTC market quote reference</a>.
+          </li>
+          <li>
+            Official FRED daily VIX series showing 24.54 on April 1, 2026:
+            <a href="https://fred.stlouisfed.org/data/VIXCLS" target="_blank" rel="noreferrer">FRED VIX daily series</a>.
+          </li>
+          <li>
+            Federal Reserve implementation note reflecting a March 18, 2026 federal funds target
+            range of 3.5% to 3.75%:
+            <a href="https://www.federalreserve.gov/monetarypolicy/files/monetary20260318a1.pdf?o=true" target="_blank" rel="noreferrer">FOMC implementation note</a>.
+          </li>
+          <li>
+            Cboe full-year 2025 options volume release:
+            <a href="https://ir.cboe.com/news/news-details/2026/Cboe-Global-Markets-Reports-Trading-Volume-for-December-and-Full-Year-2025/default.aspx" target="_blank" rel="noreferrer">Cboe 2025 volume report</a>.
+          </li>
+          <li>
+            Cboe index commentary for March 2026:
+            <a href="https://www.cboe.com/insights/posts/index-insights-march-2026" target="_blank" rel="noreferrer">Cboe Index Insights: March 2026</a>.
+          </li>
+          <li>
+            Cboe state-of-industry article covering 2025 options growth:
+            <a href="https://www.cboe.com/insights/posts/the-state-of-the-options-industry-2025/" target="_blank" rel="noreferrer">The State of the Options Industry: 2025</a>.
+          </li>
+          <li>
+            IBKR paper trading and API materials:
+            <a href="https://www.interactivebrokers.com/campus/trading-lessons/request-paper-trading-account/" target="_blank" rel="noreferrer">IBKR paper trading account</a>,
+            <a href="https://www.interactivebrokers.com/campus/ibkr-api-page/twsapi-doc/" target="_blank" rel="noreferrer">IBKR API docs</a>.
+          </li>
+          <li>
+            Alpaca options trading docs covering live options, paper enablement, and shared Orders
+            API:
+            <a href="https://docs.alpaca.markets/v1.3/docs/options-trading" target="_blank" rel="noreferrer">Alpaca options trading docs</a>,
+            <a href="https://docs.alpaca.markets/docs/options-level-3-trading" target="_blank" rel="noreferrer">Alpaca multi-leg options docs</a>.
+          </li>
+          <li>
+            Tradier docs covering sandbox, trading, and delayed sandbox data:
+            <a href="https://docs.tradier.com/docs/getting-started" target="_blank" rel="noreferrer">Tradier getting started</a>,
+            <a href="https://docs.tradier.com/docs/trading" target="_blank" rel="noreferrer">Tradier trading</a>,
+            <a href="https://docs.tradier.com/docs/market-data" target="_blank" rel="noreferrer">Tradier market data</a>.
+          </li>
+          <li>
+            tastytrade docs covering asset types, complex orders, and sandbox behavior:
+            <a href="https://developer.tastytrade.com/basic-api-usage/" target="_blank" rel="noreferrer">tastytrade basic API usage</a>,
+            <a href="https://developer.tastytrade.com/api-overview/" target="_blank" rel="noreferrer">tastytrade API overview</a>,
+            <a href="https://developer.tastytrade.com/sandbox" target="_blank" rel="noreferrer">tastytrade sandbox</a>.
+          </li>
+          <li>
+            TradeStation docs covering stocks/options/futures and SIM behavior:
+            <a href="https://api.tradestation.com/docs/" target="_blank" rel="noreferrer">TradeStation API docs</a>,
+            <a href="https://api.tradestation.com/docs/fundamentals/sim-vs-live/" target="_blank" rel="noreferrer">TradeStation SIM vs LIVE</a>.
+          </li>
+          <li>
+            Coinbase docs covering Advanced Trade and 24x7 derivatives:
+            <a href="https://docs.cdp.coinbase.com/coinbase-app/advanced-trade-apis/guides/sdk-rest-api" target="_blank" rel="noreferrer">Coinbase Advanced Trade quickstart</a>,
+            <a href="https://docs.cdp.coinbase.com/derivatives/introduction/market-hours" target="_blank" rel="noreferrer">Coinbase derivatives market hours</a>.
+          </li>
+          <li>
+            Investor.gov and FINRA material on microcap and penny-stock manipulation risks:
+            <a href="https://www.investor.gov/additional-resources/spotlight/microcap-fraud" target="_blank" rel="noreferrer">Investor.gov microcap fraud</a>,
+            <a href="https://www.finra.org/investors/insights/pump-and-dump-scams" target="_blank" rel="noreferrer">FINRA pump-and-dump scams</a>.
+          </li>
+        </ol>
+      </section>
+    </div>
+  </body>
+</html>
