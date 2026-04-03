@@ -25,6 +25,7 @@ This file teaches the Decision Oracle how to answer on behalf of the project own
 - Prefer reversible decisions over clever decisions.
 - Preserve a clear audit trail for every important change.
 - Do not enable live trading without manual approval and a paper-to-live evidence trail.
+- Keep `README.md`, `docs/current-state.md`, `docs/legacy-inventory.md`, `docs/legacy-extraction-portal.html`, and `tasks/master-roadmap.md` synchronized with any change that affects architecture, runtime behavior, or migration status.
 
 ## Preferred Defaults
 

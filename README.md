@@ -5,6 +5,10 @@ This repository is scaffolded as a broker-agnostic, multi-strategy trading platf
 Start with:
 
 - `index.html` for the platform redesign brief
+- `docs/legacy-extraction-portal.html` for the published legacy-extraction and moving-parts overview
+- `docs/legacy-inventory.md` for the concrete list of high-value legacy strategies, scripts, workflows, and migration buckets
+- `docs/current-state.md` for the plain-English truth of what is actually built today
+- `docs/plans/2026-04-03-legacy-extraction-master-plan.md` for the migration program from the old trading repo
 - `docs/plans/2026-04-03-market-intelligence-master-plan.md` for the market-intelligence and growth strategy
 - `tasks/master-roadmap.md` for the execution backlog
 - `loop-system/README.md` for the autonomous build/research loop
@@ -50,3 +54,7 @@ Top-level layout:
 - `schemas/`: versioned JSON contracts
 - `infra/`: deployment and environment assets
 - `tests/`: replay and integration verification harnesses
+
+Documentation governance:
+
+- `AGENTS.md` tells future LLM and engineering work to keep docs synchronized with the codebase.

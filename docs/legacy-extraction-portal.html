@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Legacy Extraction Portal</title>
+    <style>
+      :root {
+        --bg: #f4efe6;
+        --paper: rgba(255, 251, 245, 0.95);
+        --ink: #1e2622;
+        --muted: #657069;
+        --green: #0b6b4d;
+        --green-soft: #d8efe6;
+        --amber: #996221;
+        --amber-soft: #f4e7d6;
+        --rose: #8b4040;
+        --rose-soft: #f3dddd;
+        --edge: rgba(30, 38, 34, 0.12);
+        --shadow: 0 28px 70px rgba(33, 40, 35, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(11, 107, 77, 0.13), transparent 24%),
+          radial-gradient(circle at 85% 15%, rgba(153, 98, 33, 0.1), transparent 20%),
+          linear-gradient(180deg, #f8f3eb 0%, var(--bg) 100%);
+        font-family: Georgia, "Times New Roman", serif;
+      }
+
+      .page {
+        width: min(1180px, calc(100vw - 28px));
+        margin: 0 auto;
+        padding: 26px 0 56px;
+      }
+
+      .hero,
+      section {
+        background: var(--paper);
+        border: 1px solid var(--edge);
+        border-radius: 28px;
+        box-shadow: var(--shadow);
+      }
+
+      .hero {
+        padding: 34px 34px 28px;
+        margin-bottom: 18px;
+      }
+
+      .eyebrow {
+        margin: 0 0 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        font-size: 0.74rem;
+        color: var(--muted);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(2.6rem, 6vw, 5rem);
+        line-height: 0.94;
+        letter-spacing: -0.06em;
+      }
+
+      .lead {
+        max-width: 800px;
+        margin: 14px 0 0;
+        color: var(--muted);
+        font-size: 1.05rem;
+        line-height: 1.6;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 20px;
+      }
+
+      .chip {
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: var(--green-soft);
+        color: var(--green);
+        font-size: 0.88rem;
+      }
+
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+
+      nav a {
+        color: var(--ink);
+        text-decoration: none;
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid var(--edge);
+        border-radius: 999px;
+        padding: 9px 13px;
+      }
+
+      section {
+        padding: 28px;
+        margin-bottom: 18px;
+      }
+
+      h2 {
+        margin: 0 0 16px;
+        font-size: 1.6rem;
+        letter-spacing: -0.03em;
+      }
+
+      p,
+      li {
+        line-height: 1.65;
+      }
+
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .stats {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      }
+
+      .card {
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid var(--edge);
+        border-radius: 20px;
+        padding: 18px;
+      }
+
+      .stat {
+        font-size: 2rem;
+        margin: 4px 0 8px;
+      }
+
+      .small {
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .matrix {
+        display: grid;
+        gap: 14px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 11px;
+        border-radius: 999px;
+        font-size: 0.85rem;
+      }
+
+      .extract {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+
+      .redesign {
+        background: var(--amber-soft);
+        color: var(--amber);
+      }
+
+      .reference {
+        background: rgba(90, 103, 120, 0.14);
+        color: #4a5b69;
+      }
+
+      .discard {
+        background: var(--rose-soft);
+        color: var(--rose);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--edge);
+        padding: 14px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--muted);
+      }
+
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      code {
+        font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+        font-size: 0.9em;
+      }
+
+      .columns {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      }
+
+      .callout {
+        border-left: 4px solid var(--green);
+        background: rgba(11, 107, 77, 0.07);
+        padding: 14px 16px;
+        border-radius: 16px;
+      }
+
+      @media (max-width: 720px) {
+        .page {
+          width: min(100vw - 16px, 1180px);
+          padding: 16px 0 42px;
+        }
+
+        .hero,
+        section {
+          padding: 22px;
+          border-radius: 22px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="hero">
+        <p class="eyebrow">NewTradingSystem / Migration / 2026-04-03</p>
+        <h1>Legacy Extraction Portal</h1>
+        <p class="lead">
+          This page explains how we will take the useful strategies, CLIs, workflows, safety rules,
+          and ideas from the old <code>trading</code> repo and absorb them into
+          <code>NewTradingSystem</code> without rebuilding the old chaos.
+        </p>
+        <div class="meta">
+          <div class="chip">Goal: useful parity, not repo bloat parity</div>
+          <div class="chip">Default mode: paper-only</div>
+          <div class="chip">Rule: strategies stay isolated from brokers</div>
+        </div>
+        <p class="lead" style="margin-top: 18px;">
+          Detailed extraction buckets live in <a href="./legacy-inventory.md">legacy-inventory.md</a>.
+        </p>
+      </header>
+
+      <nav>
+        <a href="#gap">Why The Gap Exists</a>
+        <a href="#inventory">Legacy Inventory</a>
+        <a href="#matrix">Migration Matrix</a>
+        <a href="#phases">Program Phases</a>
+        <a href="#docs">Documentation Contract</a>
+        <a href="#current">Current Truth</a>
+      </nav>
+
+      <section id="gap">
+        <h2>Why The Gap Exists</h2>
+        <div class="grid stats">
+          <div class="card">
+            <div class="small">Legacy repo size</div>
+            <div class="stat">1.2G</div>
+            <div class="small">Measured in the local workspace on 2026-04-03.</div>
+          </div>
+          <div class="card">
+            <div class="small">New repo size</div>
+            <div class="stat">3.8M</div>
+            <div class="small">Clean rebuild, not yet feature-parity.</div>
+          </div>
+          <div class="card">
+            <div class="small">Legacy workflows</div>
+            <div class="stat">90</div>
+            <div class="small">We do not want to recreate that count.</div>
+          </div>
+          <div class="card">
+            <div class="small">Legacy Python source + scripts + tests</div>
+            <div class="stat">543</div>
+            <div class="small">197 in <code>src</code>, 135 in <code>scripts</code>, 211 in tests.</div>
+          </div>
+        </div>
+        <div class="columns" style="margin-top: 16px;">
+          <div class="card">
+            <h3>Most of the storage gap is not runtime code</h3>
+            <p>
+              The old repo carries hundreds of megabytes of git history, worktrees, data files,
+              backtests, logs, and accumulated docs. The new repo is much smaller because it is not
+              dragging those artifacts along yet.
+            </p>
+          </div>
+          <div class="card">
+            <h3>The capability gap is still real</h3>
+            <p>
+              The old repo has many more strategies, scripts, workflows, safety rules, and
+              operational helpers. We need to bring over the good parts, but only through the new
+              platform boundaries.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="inventory">
+        <h2>Legacy Inventory</h2>
+        <div class="matrix">
+          <div class="card">
+            <h3>Strategies</h3>
+            <p>
+              The legacy repo contains iron condor, momentum, REIT, Rule One options, VIX mean
+              reversion, and other strategy modules. The first extracted plugin is already the
+              legacy iron condor path.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Operational Scripts</h3>
+            <p>
+              The legacy repo has more than one hundred scripts across trading, sync,
+              verification, research, content, and maintenance. The new platform should collapse
+              these into a smaller product-grade CLI surface.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Workflows</h3>
+            <p>
+              The old repo has 90 GitHub workflows spanning runtime trading, alerts, emergency
+              actions, CI, content, docs, and experiments. The new repo should keep only a much
+              smaller workflow set after logic is moved into code.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="matrix">
+        <h2>Migration Matrix</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Legacy Area</th>
+              <th>Examples</th>
+              <th>Target Home</th>
+              <th>Treatment</th>
+              <th>Priority</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Iron condor lifecycle</td>
+              <td><code>iron_condor_trader.py</code>, <code>manage_iron_condor_positions.py</code></td>
+              <td><code>src/new_trading_system/strategies/legacy_iron_condor.py</code></td>
+              <td><span class="pill extract">Extract + redesign</span></td>
+              <td>Highest</td>
+            </tr>
+            <tr>
+              <td>VIX and entry signals</td>
+              <td><code>vix_mean_reversion_signal.py</code>, strategy signal files</td>
+              <td>Strategy and market-intelligence layers</td>
+              <td><span class="pill extract">Extract</span></td>
+              <td>High</td>
+            </tr>
+            <tr>
+              <td>Gateway risk rules</td>
+              <td><code>trade_gateway.py</code></td>
+              <td><code>services/risk_engine.py</code></td>
+              <td><span class="pill redesign">Redesign</span></td>
+              <td>Highest</td>
+            </tr>
+            <tr>
+              <td>Mandatory order safety</td>
+              <td><code>mandatory_trade_gate.py</code></td>
+              <td>Risk and execution services</td>
+              <td><span class="pill redesign">Redesign</span></td>
+              <td>Highest</td>
+            </tr>
+            <tr>
+              <td>Broker sync and verification</td>
+              <td><code>sync_*</code>, <code>verify_*</code>, stale-order scripts</td>
+              <td>Future reconcile and verify CLIs</td>
+              <td><span class="pill redesign">Redesign</span></td>
+              <td>High</td>
+            </tr>
+            <tr>
+              <td>Replay and backtests</td>
+              <td><code>src/backtest</code>, <code>data/backtests</code></td>
+              <td>Future research lab</td>
+              <td><span class="pill redesign">Redesign</span></td>
+              <td>High</td>
+            </tr>
+            <tr>
+              <td>Momentum, Rule One, REIT</td>
+              <td>legacy strategy modules</td>
+              <td>Future strategy families</td>
+              <td><span class="pill reference">Reference first</span></td>
+              <td>Medium</td>
+            </tr>
+            <tr>
+              <td>Blog, SEO, and publishing automation</td>
+              <td>content scripts and doc workflows</td>
+              <td>Out of trading runtime scope</td>
+              <td><span class="pill discard">Discard / separate</span></td>
+              <td>Low</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="phases">
+        <h2>Program Phases</h2>
+        <div class="columns">
+          <div class="card">
+            <h3>Phase A</h3>
+            <p>Inventory freeze, classification, and migration map.</p>
+          </div>
+          <div class="card">
+            <h3>Phase B</h3>
+            <p>Core engine parity: risk, reconciliation, scheduling, and operator safety.</p>
+          </div>
+          <div class="card">
+            <h3>Phase C</h3>
+            <p>Options parity: finish iron condor lifecycle and signal extraction.</p>
+          </div>
+          <div class="card">
+            <h3>Phase D</h3>
+            <p>Collapse useful legacy scripts into a smaller new CLI surface.</p>
+          </div>
+          <div class="card">
+            <h3>Phase E</h3>
+            <p>Replay and research lab for promotion scoring and strategy evaluation.</p>
+          </div>
+          <div class="card">
+            <h3>Phase F</h3>
+            <p>Extract the next strategy families and replace the highest-value workflows.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="docs">
+        <h2>Documentation Contract</h2>
+        <div class="callout">
+          Any change to architecture, runtime behavior, strategy behavior, broker support, or
+          migration status must update the matching docs in the same change.
+        </div>
+        <div class="columns" style="margin-top: 16px;">
+          <div class="card">
+            <h3>Human-facing truth docs</h3>
+            <p>
+              <code>README.md</code>, <code>docs/current-state.md</code>,
+              <code>docs/legacy-extraction-portal.html</code>, and
+              <code>tasks/master-roadmap.md</code>.
+            </p>
+          </div>
+          <div class="card">
+            <h3>LLM-facing rule</h3>
+            <p>
+              <code>AGENTS.md</code> now tells future LLM work to keep the docs synchronized with
+              code and migration status.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="current">
+        <h2>Current Truth</h2>
+        <div class="columns">
+          <div class="card">
+            <h3>Already shipped</h3>
+            <p>
+              The first paper-only vertical slice exists: worker, strategy runtime, risk engine,
+              execution engine, ledger, internal paper broker, Alpaca paper adapter, legacy iron
+              condor plugin, tests, and dashboard.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Still missing</h3>
+            <p>
+              Full risk parity, order reconciliation, replay lab, broader strategy extraction,
+              cleaner workflow replacement, and richer operator controls.
+            </p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>
