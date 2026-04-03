@@ -4,6 +4,7 @@
 
 - [ ] Create a project-wide architecture decision record for canonical state, risk path, and strategy contract.
 - [ ] Add CI checks for schema validation, markdown lint, Python syntax, and basic repo hygiene.
+- [x] Add a first-pass CI workflow for syntax, tests, schema JSON parsing, and internal paper smoke verification.
 - [ ] Define the canonical event envelope and market-state schemas.
 - [ ] Define the canonical ledger schema and promotion-stage model.
 - [ ] Define the paper-only operating policy and paper-to-live graduation scorecard.

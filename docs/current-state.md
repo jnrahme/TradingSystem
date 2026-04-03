@@ -28,11 +28,13 @@ This document is the plain-English truth layer for `NewTradingSystem`.
 - A worker execution lock exists so overlapping runs cannot mutate the same paper state at once
 - Reconcile and verify CLI commands now absorb the first useful legacy sync and verification behaviors
 - Worktree checkouts can reuse the root `.env.paper.local` for Alpaca paper verification without copying the file into each branch checkout
+- A first-pass CI workflow now runs the repo verification script on pushes and pull requests
 - Automated verification exists for the first vertical slice:
   - 28 pytest tests currently pass
   - internal-paper run, reconcile, and verify commands pass sequentially
   - Alpaca paper verify passes from a dedicated git worktree
   - repeated internal-paper execute runs still avoid reopening the same condor expiry
+  - `bash scripts/verify.sh` now provides one local verification entrypoint for syntax, tests, schema parsing, and internal paper smoke checks
 
 ## What Does Not Exist Yet
 

@@ -41,6 +41,7 @@ First runnable vertical slice:
 Quick start:
 
 - `python3 -m pip install -e ".[dev]"`
+- `bash scripts/verify.sh`
 - `PYTHONPATH=src python3 -m new_trading_system.cli run-once --broker internal-paper`
 - `PYTHONPATH=src python3 -m new_trading_system.cli run-once --broker internal-paper --execute`
 - `PYTHONPATH=src python3 -m new_trading_system.cli reconcile --broker internal-paper`
@@ -54,6 +55,11 @@ Worktree note:
 
 - paper credentials stay in the git-ignored root `.env.paper.local`
 - worktree checkouts automatically fall back to that root env file, so feature branches can verify Alpaca paper behavior without copying secrets into each worktree
+
+Verification note:
+
+- `.github/workflows/ci.yml` now runs `bash scripts/verify.sh` on pushes and pull requests
+- the verification script checks patch hygiene, compiles Python, parses schema JSON files, runs `pytest -q`, and exercises the internal paper worker plus reconcile and verify commands
 
 Top-level layout:
 
