@@ -274,7 +274,7 @@
         <div class="hero-meta">
           <div class="chip">Primary Goal: Massive Scale Without Architectural Drift</div>
           <div class="chip">Operating Model: Broker-Agnostic + Strategy Plugins</div>
-          <div class="chip">Default Rollout: Replay → Internal Paper → Broker Paper → Live Canary</div>
+          <div class="chip">Default Rollout: Replay → Internal Paper → Broker Paper</div>
         </div>
       </header>
 
@@ -327,6 +327,11 @@
           execution simulator, a strategy plugin SDK, a portfolio ledger, a risk engine, and a
           broker capability registry. Do not hard-wire the business to Alpaca, IBKR, Coinbase, or
           any single venue.
+        </div>
+        <div class="callout" style="margin-top: 18px;">
+          <strong>Operating rule for now:</strong> paper-only until a strategy proves it is worth
+          keeping. Live trading support may exist in the architecture, but it should remain locked
+          behind explicit promotion criteria and manual approval.
         </div>
       </section>
 
@@ -388,8 +393,9 @@
               rollout gates.
             </p>
             <p>
-              The first live-capital strategies should therefore be liquid, rules-driven, and easy
-              to replay: index/ETF options, large-cap equity strategies, and major crypto pairs.
+            The first serious strategies should therefore be liquid, rules-driven, and easy to
+            replay and paper trade: index/ETF options, large-cap equity strategies, and major
+            crypto pairs.
             </p>
           </div>
         </div>
@@ -877,7 +883,7 @@ Production Workflow
           <div class="card">
             <strong>Strategy Leaderboard</strong>
             PnL, Sharpe-style diagnostics, win rate, expectancy, max drawdown, utilization,
-            turnover, and live-vs-sim drift.
+            turnover, and paper-vs-sim drift.
           </div>
           <div class="card">
             <strong>Portfolio Health</strong>
@@ -891,8 +897,8 @@ Production Workflow
           </div>
           <div class="card">
             <strong>Promotion Pipeline</strong>
-            Which strategies are in replay, internal paper, broker paper, live canary, or scaled
-            live, and why each one is blocked or approved.
+            Which strategies are in replay, internal paper, or broker paper, and why each one is
+            blocked, approved, or not yet eligible for any live discussion.
           </div>
           <div class="card">
             <strong>Incident Review</strong>
@@ -983,7 +989,8 @@ tests/
           <div class="card">
             <strong>Phase 5</strong>
             Scale operationally: split heavy services, add analytics warehouse, expand brokers,
-            and introduce model-serving or ML policy layers where they truly add value.
+            and introduce model-serving or ML policy layers where they truly add value. Only then
+            define real-money promotion rules.
           </div>
         </div>
       </section>

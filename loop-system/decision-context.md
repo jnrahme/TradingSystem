@@ -18,11 +18,13 @@ This file teaches the Decision Oracle how to answer on behalf of the project own
 
 ## Hard Rules
 
+- Default to paper-only unless an explicit task says otherwise.
 - Do not let strategies place broker orders directly.
 - Do not skip replay, paper, or verification steps.
 - Do not claim an edge without enough evidence.
 - Prefer reversible decisions over clever decisions.
 - Preserve a clear audit trail for every important change.
+- Do not enable live trading without manual approval and a paper-to-live evidence trail.
 
 ## Preferred Defaults
 
@@ -47,4 +49,3 @@ This file teaches the Decision Oracle how to answer on behalf of the project own
 - The first serious learning wedge should be broad-market regime trading.
 - Options remain important because the old repo already provides useful lessons there.
 - Penny stocks are experimental and should not be a first live target.
-

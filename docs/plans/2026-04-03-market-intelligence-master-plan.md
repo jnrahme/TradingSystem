@@ -30,6 +30,37 @@ No system will perfectly model every news event, every emotion swing, every liqu
 - better risk control
 - better learning loops
 
+## Paper-Only Operating Policy
+
+We should be paper-only until the platform proves that a strategy is worth keeping.
+
+That means:
+
+- all new strategies start in replay
+- all promoted strategies stay in internal paper first
+- broker-paper validation comes before any real-money conversation
+- live trading is opt-in, never default
+- manual approval is required before any strategy touches real capital
+
+### What "worth keeping" means
+
+A strategy is not worth keeping because it had a few good trades.
+
+A strategy becomes worth keeping only when it shows:
+
+- positive expectancy after realistic costs
+- stable behavior across more than one regime
+- acceptable drawdown under policy
+- understandable failure modes
+- low enough live-versus-paper drift to trust the implementation path
+- enough sample size to distinguish signal from luck
+
+### What this means for the platform
+
+The repo should assume that paper trading is the real operating environment for now.
+
+Live-trading support may exist in the architecture, but it should stay behind explicit promotion gates, strategy-level approval, and manual operator action.
+
 ### Hard truth 2: the current `trading` repo contains useful lessons, not a final platform
 
 The current repo taught us what not to repeat:
@@ -201,6 +232,8 @@ Examples:
 
 This stage teaches position sizing, entries, exits, and attribution on simple instruments.
 
+This stage should still be paper-only.
+
 ### Stage 3: Defined-Risk Options Strategies
 
 Examples:
@@ -211,6 +244,8 @@ Examples:
 - convex hedges during stress regimes
 
 This stage reuses learnings from the old `trading` repo, but under better architecture.
+
+This stage should also remain paper-only until a strategy graduates through the promotion scorecard.
 
 ### Stage 4: Crypto Strategies
 
@@ -321,6 +356,8 @@ Do not tie the system to one broker.
 ### Critical rule
 
 Broker paper environments are useful but not the truth layer. We must own an internal simulator and replay engine.
+
+That still does not change the operating rule: paper-only until proven.
 
 ## Data Stack Recommendation
 
@@ -440,6 +477,7 @@ The `LOOP SYSTEM` is useful as the execution shell for continuous work, but it n
 4. internal paper simulation plan
 5. daily market-note generation
 6. first broad-market research strategy
+7. paper-to-live promotion scorecard
 
 ### First strategy family
 
@@ -493,7 +531,8 @@ The first advanced strategy family after that should be:
 - select first production candidate
 - run shadow / paper validation
 - implement risk limits and promotion rules
-- start micro-capital canary only if evidence supports it
+- define explicit paper-to-live graduation rules
+- keep all strategies paper-only until those rules are met and manually approved
 
 ## Final Recommendation
 

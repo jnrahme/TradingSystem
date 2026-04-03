@@ -28,5 +28,5 @@ and then mark it complete.
 - Never claim a strategy or model works without evidence.
 - Keep the platform boundary clean while implementing.
 - Prefer reversible, modular changes.
+- Keep strategies paper-only unless the task explicitly defines a live-readiness change.
 - When a task is too large, split it into smaller unchecked tasks before proceeding.
-

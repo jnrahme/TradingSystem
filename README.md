@@ -13,9 +13,11 @@ The repo is organized so the trading system, strategies, reusable SDKs, dashboar
 
 Core operating assumption:
 
+- Paper-only is the default operating mode.
 - Strategies never place broker orders directly.
 - The platform owns execution, risk, reconciliation, persistence, and promotion gates.
-- Every strategy must pass replay, internal paper trading, and broker-paper validation before live capital is increased.
+- Every strategy must pass replay, internal paper trading, and broker-paper validation before any live capital is considered.
+- No strategy moves to real money without explicit live-approval criteria and manual promotion.
 
 Top-level layout:
 

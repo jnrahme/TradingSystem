@@ -26,6 +26,6 @@ and architectural drift.
 
 - If verification is weak, uncheck the item.
 - If a change violates architecture boundaries, uncheck the item.
+- If a change implicitly enables live trading without explicit approval criteria, uncheck the item.
 - Add short review notes directly under the task when corrections are needed.
 - Do not implement fixes yourself in this role.
-

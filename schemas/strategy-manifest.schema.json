@@ -72,7 +72,9 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "stages"
+        "stages",
+        "paper_only_by_default",
+        "requires_manual_live_approval"
       ],
       "properties": {
         "stages": {
@@ -89,11 +91,21 @@
             ]
           }
         },
+        "paper_only_by_default": {
+          "type": "boolean"
+        },
+        "requires_manual_live_approval": {
+          "type": "boolean"
+        },
         "minimum_replay_days": {
           "type": "integer",
           "minimum": 1
         },
         "minimum_paper_trades": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "minimum_profitable_paper_days": {
           "type": "integer",
           "minimum": 0
         }
@@ -128,4 +140,3 @@
     }
   }
 }
-

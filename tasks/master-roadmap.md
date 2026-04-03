@@ -6,6 +6,8 @@
 - [ ] Add CI checks for schema validation, markdown lint, Python syntax, and basic repo hygiene.
 - [ ] Define the canonical event envelope and market-state schemas.
 - [ ] Define the canonical ledger schema and promotion-stage model.
+- [ ] Define the paper-only operating policy and paper-to-live graduation scorecard.
+- [ ] Add a repo-wide default that every strategy manifest starts paper-only and requires manual live approval.
 - [ ] Add environment templates for local research, paper trading, and future live deployment.
 
 ## Phase 1 — Loop System Adaptation
@@ -46,6 +48,7 @@
 - [ ] Create the `defined-risk-options` strategy family folder and manifest.
 - [ ] Create the `crypto-regime` strategy family folder and manifest.
 - [ ] Write acceptance rules for when a strategy may graduate from replay to paper.
+- [ ] Write acceptance rules for when a strategy may graduate from paper to live.
 
 ## Phase 6 — Simulation and Brokers
 
