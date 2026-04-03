@@ -7,8 +7,8 @@
 - [ ] Define the canonical event envelope and market-state schemas.
 - [ ] Define the canonical ledger schema and promotion-stage model.
 - [ ] Define the paper-only operating policy and paper-to-live graduation scorecard.
-- [ ] Add a repo-wide default that every strategy manifest starts paper-only and requires manual live approval.
-- [ ] Add environment templates for local research, paper trading, and future live deployment.
+- [x] Add a repo-wide default that every strategy manifest starts paper-only and requires manual live approval.
+- [x] Add environment templates for local research, paper trading, and future live deployment.
 
 ## Phase 1 — Loop System Adaptation
 
@@ -52,18 +52,20 @@
 
 ## Phase 6 — Simulation and Brokers
 
-- [ ] Define the internal paper broker contract.
+- [x] Define the internal paper broker contract.
 - [ ] Define the broker capability registry.
-- [ ] Build a first pass on Alpaca adapter requirements.
+- [x] Build a first pass on Alpaca adapter requirements.
 - [ ] Build a first pass on IBKR adapter requirements.
 - [ ] Build a first pass on Coinbase adapter requirements.
 - [ ] Write reconciliation requirements for broker fills versus canonical ledger.
+- [x] Ship the first runnable paper-only vertical slice with worker, ledger, internal paper broker, Alpaca paper adapter, and legacy options strategy plugin.
 
 ## Phase 7 — Dashboard and Operators
 
 - [ ] Define the dashboard read models for strategy leaderboard, portfolio health, and incidents.
 - [ ] Define promotion and kill-switch workflows for the operator console.
 - [ ] Define daily review and post-trade attribution reports.
+- [x] Build the first dashboard summary file and static operator view for broker-scoped paper results.
 
 ## Phase 8 — Live Readiness
 

@@ -10,6 +10,9 @@ node_modules/
 dist/
 build/
 coverage/
+var/
+apps/dashboard/data/*.json
+!apps/dashboard/data/.gitkeep
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
