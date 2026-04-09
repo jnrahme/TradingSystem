@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
+from math import log, sqrt
 from typing import Any
+from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
@@ -28,7 +30,9 @@ class AlpacaPaperBrokerAdapter(BrokerAdapter):
     name = "alpaca-paper"
     mode = "paper-alpaca"
 
-    def __init__(self, api_key: str, api_secret: str, trading_base_url: str, data_base_url: str):
+    def __init__(
+        self, api_key: str, api_secret: str, trading_base_url: str, data_base_url: str
+    ):
         self.api_key = api_key
         self.api_secret = api_secret
         self.trading_base_url = trading_base_url.rstrip("/")
@@ -47,12 +51,14 @@ class AlpacaPaperBrokerAdapter(BrokerAdapter):
         url: str,
         params: dict[str, Any] | None = None,
         payload: dict[str, Any] | None = None,
-    ) -> dict[str, Any]:
+    ) -> Any:
         full_url = url
         if params:
             full_url = f"{url}?{urlencode(params, doseq=True)}"
         data = json.dumps(payload).encode() if payload is not None else None
-        request = Request(full_url, data=data, headers=self._headers(), method=method.upper())
+        request = Request(
+            full_url, data=data, headers=self._headers(), method=method.upper()
+        )
         with urlopen(request) as response:
             return json.loads(response.read().decode())
 
@@ -60,31 +66,83 @@ class AlpacaPaperBrokerAdapter(BrokerAdapter):
     def _parse_timestamp(raw_value: str | None) -> datetime | None:
         if not raw_value:
             return None
-        return datetime.fromisoformat(raw_value.replace("Z", "+00:00")).replace(tzinfo=None)
+        parsed = datetime.fromisoformat(raw_value.replace("Z", "+00:00"))
+        if parsed.tzinfo is not None:
+            parsed = parsed.astimezone(UTC)
+        return parsed.replace(tzinfo=None)
 
     def get_clock(self) -> MarketClock:
         payload = self._request("GET", f"{self.trading_base_url}/clock")
         return MarketClock(
-            timestamp=datetime.fromisoformat(payload["timestamp"].replace("Z", "+00:00")).replace(tzinfo=None),
+            timestamp=self._parse_timestamp(payload.get("timestamp"))
+            or datetime.now(UTC).replace(tzinfo=None),
             is_open=bool(payload["is_open"]),
-            next_open=datetime.fromisoformat(payload["next_open"].replace("Z", "+00:00")).replace(tzinfo=None),
-            next_close=datetime.fromisoformat(payload["next_close"].replace("Z", "+00:00")).replace(tzinfo=None),
+            next_open=self._parse_timestamp(payload.get("next_open")),
+            next_close=self._parse_timestamp(payload.get("next_close")),
         )
 
     def get_stock_quote(self, symbol: str) -> Quote:
-        payload = self._request("GET", f"{self.data_base_url}/v2/stocks/{symbol}/snapshot")
+        try:
+            payload = self._request(
+                "GET", f"{self.data_base_url}/v2/stocks/{symbol}/snapshot"
+            )
+        except HTTPError:
+            if symbol.upper() == "VIX":
+                return self._proxy_vix_quote()
+            raise
         latest_trade = payload.get("latestTrade") or {}
         latest_quote = payload.get("latestQuote") or {}
         return Quote(
             bid=float(latest_quote.get("bp") or 0),
             ask=float(latest_quote.get("ap") or 0),
             last=float(latest_trade.get("p") or 0),
-            timestamp=datetime.fromisoformat(latest_trade["t"].replace("Z", "+00:00")).replace(tzinfo=None)
-            if latest_trade.get("t")
-            else None,
+            timestamp=self._parse_timestamp(latest_trade.get("t")),
         )
 
-    def get_option_contracts(self, underlying: str, expiry: str) -> list[OptionContract]:
+    def _proxy_vix_quote(self, lookback_days: int = 20) -> Quote:
+        end_date = date.today()
+        start_date = end_date - timedelta(days=max(lookback_days * 3, 30))
+        payload = self._request(
+            "GET",
+            f"{self.data_base_url}/v2/stocks/SPY/bars",
+            params={
+                "timeframe": "1Day",
+                "start": f"{start_date.isoformat()}T00:00:00Z",
+                "end": f"{end_date.isoformat()}T23:59:59Z",
+                "adjustment": "all",
+                "sort": "asc",
+                "feed": "iex",
+            },
+        )
+        bars = payload.get("bars") if isinstance(payload, dict) else None
+        closes: list[float] = []
+        for bar in bars or []:
+            if not isinstance(bar, dict):
+                continue
+            raw_close = bar.get("c")
+            if raw_close is None:
+                continue
+            closes.append(float(raw_close))
+        if len(closes) < 2:
+            raise ValueError("insufficient bars for proxy VIX estimate")
+        log_returns = [
+            log(closes[idx] / closes[idx - 1]) for idx in range(1, len(closes))
+        ]
+        mean_return = sum(log_returns) / len(log_returns)
+        variance = sum((value - mean_return) ** 2 for value in log_returns) / len(
+            log_returns
+        )
+        annualized_volatility = max(0.10, min(0.40, sqrt(variance) * sqrt(252.0)))
+        proxy_vix = round(annualized_volatility * 100.0, 2)
+        return Quote(
+            bid=max(proxy_vix - 0.05, 0.0),
+            ask=proxy_vix + 0.05,
+            last=proxy_vix,
+        )
+
+    def get_option_contracts(
+        self, underlying: str, expiry: str
+    ) -> list[OptionContract]:
         payload = self._request(
             "GET",
             f"{self.trading_base_url}/options/contracts",
@@ -101,7 +159,9 @@ class AlpacaPaperBrokerAdapter(BrokerAdapter):
                 OptionContract(
                     symbol=item["symbol"],
                     underlying=item["underlying_symbol"],
-                    expiry=datetime.strptime(item["expiration_date"], "%Y-%m-%d").date(),
+                    expiry=datetime.strptime(
+                        item["expiration_date"], "%Y-%m-%d"
+                    ).date(),
                     strike=float(item["strike_price"]),
                     option_type=item["type"],
                     tradable=bool(item.get("tradable", True)),
@@ -122,9 +182,7 @@ class AlpacaPaperBrokerAdapter(BrokerAdapter):
                 bid=float(quote_payload.get("bp") or 0),
                 ask=float(quote_payload.get("ap") or 0),
                 last=None,
-                timestamp=datetime.fromisoformat(quote_payload["t"].replace("Z", "+00:00")).replace(tzinfo=None)
-                if quote_payload.get("t")
-                else None,
+                timestamp=self._parse_timestamp(quote_payload.get("t")),
             )
         return quotes
 
@@ -149,7 +207,10 @@ class AlpacaPaperBrokerAdapter(BrokerAdapter):
     def get_positions(self) -> list[Position]:
         payload = self._request("GET", f"{self.trading_base_url}/positions")
         positions: list[Position] = []
-        for item in payload:
+        items = payload if isinstance(payload, list) else []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
             parsed = parse_occ_symbol(item["symbol"])
             asset_class = AssetClass.OPTION if parsed else AssetClass.EQUITY
             positions.append(
@@ -174,7 +235,11 @@ class AlpacaPaperBrokerAdapter(BrokerAdapter):
                 "type": intent.order_type.value,
                 "time_in_force": intent.time_in_force,
                 "legs": [
-                    {"symbol": leg.symbol, "side": leg.side.value, "ratio_qty": leg.ratio_qty}
+                    {
+                        "symbol": leg.symbol,
+                        "side": leg.side.value,
+                        "ratio_qty": leg.ratio_qty,
+                    }
                     for leg in intent.legs
                 ],
             }
@@ -195,17 +260,24 @@ class AlpacaPaperBrokerAdapter(BrokerAdapter):
 
     def submit_order(self, intent: OrderIntent) -> OrderResult:
         payload = self.preview_payload(intent)
-        response = self._request("POST", f"{self.trading_base_url}/orders", payload=payload)
+        response = self._request(
+            "POST", f"{self.trading_base_url}/orders", payload=payload
+        )
         filled_at = self._parse_timestamp(response.get("filled_at"))
         return OrderResult(
             order_id=response["id"],
             intent_id=intent.intent_id,
             strategy_id=intent.strategy_id,
             broker=self.name,
-            status=OrderStatus.FILLED if response.get("status") == "filled" else OrderStatus.ACCEPTED,
-            submitted_at=self._parse_timestamp(response["submitted_at"]) or datetime.now(UTC).replace(tzinfo=None),
+            status=OrderStatus.FILLED
+            if response.get("status") == "filled"
+            else OrderStatus.ACCEPTED,
+            submitted_at=self._parse_timestamp(response["submitted_at"])
+            or datetime.now(UTC).replace(tzinfo=None),
             filled_at=filled_at,
-            fill_price=float(response["filled_avg_price"]) if response.get("filled_avg_price") else None,
+            fill_price=float(response["filled_avg_price"])
+            if response.get("filled_avg_price")
+            else None,
             raw=response,
         )
 
@@ -216,7 +288,10 @@ class AlpacaPaperBrokerAdapter(BrokerAdapter):
             params={"status": status, "limit": limit, "nested": "true"},
         )
         orders: list[BrokerOrder] = []
-        for item in payload if isinstance(payload, list) else []:
+        items = payload if isinstance(payload, list) else []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
             legs = [
                 OptionLeg(
                     symbol=leg.get("symbol", ""),
@@ -224,7 +299,7 @@ class AlpacaPaperBrokerAdapter(BrokerAdapter):
                     ratio_qty=int(leg.get("ratio_qty", 1) or 1),
                 )
                 for leg in item.get("legs", []) or []
-                if leg.get("symbol")
+                if isinstance(leg, dict) and leg.get("symbol")
             ]
             orders.append(
                 BrokerOrder(
@@ -234,11 +309,17 @@ class AlpacaPaperBrokerAdapter(BrokerAdapter):
                     symbol=item.get("symbol"),
                     side=item.get("side"),
                     order_type=item.get("type"),
-                    quantity=float(item["qty"]) if item.get("qty") is not None else None,
+                    quantity=float(item["qty"])
+                    if item.get("qty") is not None
+                    else None,
                     filled_quantity=(
-                        float(item["filled_qty"]) if item.get("filled_qty") is not None else None
+                        float(item["filled_qty"])
+                        if item.get("filled_qty") is not None
+                        else None
                     ),
-                    limit_price=float(item["limit_price"]) if item.get("limit_price") else None,
+                    limit_price=float(item["limit_price"])
+                    if item.get("limit_price")
+                    else None,
                     created_at=self._parse_timestamp(item.get("created_at"))
                     or self._parse_timestamp(item.get("submitted_at"))
                     or datetime.now(UTC).replace(tzinfo=None),

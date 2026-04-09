@@ -16,19 +16,23 @@ from ..models import (
 from ..occ import estimate_condor_max_loss, extract_underlying, group_condors
 
 LIQUID_OPTIONS_UNDERLYINGS = frozenset({"SPY", "SPX", "XSP", "QQQ", "IWM"})
-FORBIDDEN_STRATEGY_TYPES = frozenset({"naked_put", "naked_call", "short_straddle", "short_strangle"})
+FORBIDDEN_STRATEGY_TYPES = frozenset(
+    {"naked_put", "naked_call", "short_straddle", "short_strangle"}
+)
 
 
 @dataclass(slots=True)
 class RiskPolicy:
     max_position_risk_pct: float = 0.05
     max_cumulative_risk_pct: float = 0.10
-    max_open_condors: int = 2
+    max_open_condors: int = 8
     max_positions: int = 8
     max_daily_loss_pct: float = 0.02
-    max_daily_structures: int = 1
+    max_daily_structures: int = 8
     max_daily_fills: int = 20
-    allowed_underlyings: frozenset[str] = field(default_factory=lambda: LIQUID_OPTIONS_UNDERLYINGS)
+    allowed_underlyings: frozenset[str] = field(
+        default_factory=lambda: LIQUID_OPTIONS_UNDERLYINGS
+    )
     forbidden_strategy_types: frozenset[str] = field(
         default_factory=lambda: FORBIDDEN_STRATEGY_TYPES
     )
@@ -38,6 +42,14 @@ class RiskEngine:
     def __init__(self, policy: RiskPolicy | None = None):
         self.policy = policy or RiskPolicy()
 
+    def _position_slot_limit(self, intent: OrderIntent) -> int:
+        if intent.asset_class is AssetClass.OPTION_MULTI_LEG:
+            leg_count = max(1, len(intent.legs))
+            return max(
+                self.policy.max_positions, self.policy.max_open_condors * leg_count
+            )
+        return self.policy.max_positions
+
     def _is_opening_intent(self, intent: OrderIntent) -> bool:
         return intent.purpose is IntentPurpose.ENTRY
 
@@ -45,7 +57,9 @@ class RiskEngine:
         return [leg.symbol for leg in intent.legs] or [intent.symbol]
 
     def _underlyings_for_intent(self, intent: OrderIntent) -> list[str]:
-        return sorted({extract_underlying(symbol) for symbol in self._symbols_for_intent(intent)})
+        return sorted(
+            {extract_underlying(symbol) for symbol in self._symbols_for_intent(intent)}
+        )
 
     def _intent_strategy_type(self, intent: OrderIntent) -> str | None:
         strategy_type = intent.metadata.get("strategy_type")
@@ -58,7 +72,9 @@ class RiskEngine:
     ) -> frozenset[str] | None:
         explicit = intent.metadata.get("allowed_underlyings")
         if isinstance(explicit, (list, tuple, set, frozenset)):
-            normalized = {str(value).strip().upper() for value in explicit if str(value).strip()}
+            normalized = {
+                str(value).strip().upper() for value in explicit if str(value).strip()
+            }
             return frozenset(normalized) if normalized else None
         if "liquid-etf-only" in manifest.tags:
             return self.policy.allowed_underlyings
@@ -100,7 +116,11 @@ class RiskEngine:
         for position in positions:
             if position.symbol in condor_symbols:
                 continue
-            raw_max_loss = position.metadata.get("max_loss") if isinstance(position.metadata, dict) else None
+            raw_max_loss = (
+                position.metadata.get("max_loss")
+                if isinstance(position.metadata, dict)
+                else None
+            )
             try:
                 existing_risk += max(float(raw_max_loss or 0.0), 0.0)
             except (TypeError, ValueError):
@@ -112,7 +132,11 @@ class RiskEngine:
             return max(float(intent.max_loss), 0.0)
         if intent.limit_price is None:
             return None
-        multiplier = 100.0 if intent.asset_class in (AssetClass.OPTION, AssetClass.OPTION_MULTI_LEG) else 1.0
+        multiplier = (
+            100.0
+            if intent.asset_class in (AssetClass.OPTION, AssetClass.OPTION_MULTI_LEG)
+            else 1.0
+        )
         return round(intent.limit_price * intent.quantity * multiplier, 2)
 
     def evaluate(
@@ -138,7 +162,9 @@ class RiskEngine:
         if is_opening and not market_open:
             reasons.append("market is closed for new entries")
         elif not market_open:
-            warnings.append("market is closed; closing and repair intents stay permitted")
+            warnings.append(
+                "market is closed; closing and repair intents stay permitted"
+            )
         checks.append(f"market_open:{market_open}")
 
         if account.status.upper() != "ACTIVE":
@@ -164,7 +190,8 @@ class RiskEngine:
             ]
             if blocked_underlyings:
                 reasons.append(
-                    "underlying not allowed for this strategy: " + ", ".join(sorted(blocked_underlyings))
+                    "underlying not allowed for this strategy: "
+                    + ", ".join(sorted(blocked_underlyings))
                 )
             else:
                 checks.append("underlying_whitelist:PASS")
@@ -172,7 +199,11 @@ class RiskEngine:
             checks.append("underlying_whitelist:SKIP")
 
         strategy_type = self._intent_strategy_type(intent)
-        if is_opening and strategy_type and strategy_type in self.policy.forbidden_strategy_types:
+        if (
+            is_opening
+            and strategy_type
+            and strategy_type in self.policy.forbidden_strategy_types
+        ):
             reasons.append(f"forbidden strategy type: {strategy_type}")
 
         if (
@@ -199,9 +230,17 @@ class RiskEngine:
             except (TypeError, ValueError):
                 max_dte_value = None
 
-            if dte_value is not None and min_dte_value is not None and dte_value < min_dte_value:
+            if (
+                dte_value is not None
+                and min_dte_value is not None
+                and dte_value < min_dte_value
+            ):
                 reasons.append(f"dte {dte_value} is below minimum {min_dte_value}")
-            if dte_value is not None and max_dte_value is not None and dte_value > max_dte_value:
+            if (
+                dte_value is not None
+                and max_dte_value is not None
+                and dte_value > max_dte_value
+            ):
                 reasons.append(f"dte {dte_value} is above maximum {max_dte_value}")
 
         if intent.max_loss and account.equity > 0:
@@ -214,14 +253,17 @@ class RiskEngine:
         if intent.max_loss:
             checks.append(f"intent_max_loss:{float(intent.max_loss):.2f}")
 
-        if is_opening and len(positions) >= self.policy.max_positions:
+        max_position_slots = self._position_slot_limit(intent)
+        if is_opening and len(positions) >= max_position_slots:
             reasons.append(
-                f"position count {len(positions)} reached max {self.policy.max_positions}"
+                f"position count {len(positions)} reached max {max_position_slots}"
             )
 
         existing_symbols = {position.symbol for position in positions}
         if is_opening:
-            overlapping_symbols = [symbol for symbol in intent_symbols if symbol in existing_symbols]
+            overlapping_symbols = [
+                symbol for symbol in intent_symbols if symbol in existing_symbols
+            ]
             if overlapping_symbols:
                 reasons.append(
                     "position stacking blocked; already holding "
@@ -238,7 +280,9 @@ class RiskEngine:
 
         if is_opening and account.equity > 0:
             existing_open_risk = self._estimate_existing_open_risk(positions)
-            projected_risk = existing_open_risk + max(float(intent.max_loss or 0.0), 0.0)
+            projected_risk = existing_open_risk + max(
+                float(intent.max_loss or 0.0), 0.0
+            )
             cumulative_risk_limit = account.equity * self.policy.max_cumulative_risk_pct
             if intent.max_loss and projected_risk > cumulative_risk_limit:
                 reasons.append(
@@ -248,7 +292,11 @@ class RiskEngine:
             checks.append(f"existing_open_risk:{existing_open_risk:.2f}")
 
         required_capital = self._estimate_required_capital(intent)
-        if is_opening and required_capital is not None and required_capital > account.buying_power:
+        if (
+            is_opening
+            and required_capital is not None
+            and required_capital > account.buying_power
+        ):
             reasons.append(
                 f"required capital {required_capital:.2f} exceeds buying power {account.buying_power:.2f}"
             )
@@ -261,7 +309,9 @@ class RiskEngine:
             f" structures={metrics['structures_today']}"
         )
         if is_opening and account.equity > 0:
-            if metrics["daily_pnl"] < -(account.equity * self.policy.max_daily_loss_pct):
+            if metrics["daily_pnl"] < -(
+                account.equity * self.policy.max_daily_loss_pct
+            ):
                 reasons.append(
                     f"daily loss limit exceeded: {metrics['daily_pnl']:+.2f} < "
                     f"-{self.policy.max_daily_loss_pct:.0%} of equity"
@@ -285,4 +335,6 @@ class RiskEngine:
                 f"expected credit {intent.expected_credit:.2f} is below the minimum threshold {min_credit:.2f}"
             )
 
-        return RiskDecision(approved=not reasons, reasons=reasons, warnings=warnings, checks=checks)
+        return RiskDecision(
+            approved=not reasons, reasons=reasons, warnings=warnings, checks=checks
+        )

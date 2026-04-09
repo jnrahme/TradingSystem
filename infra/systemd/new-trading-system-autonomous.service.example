@@ -1,0 +1,26 @@
+[Unit]
+Description=NewTradingSystem Autonomous Runner
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/path/to/NewTradingSystem
+EnvironmentFile=/path/to/NewTradingSystem/.env.paper.local
+ExecStart=/usr/bin/env PYTHONPATH=src python3 -m new_trading_system.cli autonomous-runner --account primary --broker internal-paper --execute --forever --interval-seconds 300 --verify-after-cycle
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=30
+Restart=on-failure
+RestartSec=10
+NoNewPrivileges=true
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/path/to/NewTradingSystem/var /path/to/NewTradingSystem/apps/dashboard/data
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=new-trading-system
+
+[Install]
+WantedBy=multi-user.target

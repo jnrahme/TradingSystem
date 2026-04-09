@@ -13,6 +13,8 @@ coverage/
 var/
 apps/dashboard/data/*.json
 !apps/dashboard/data/.gitkeep
+apps/dashboard/data/accounts/*.json
+.sisyphus/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/

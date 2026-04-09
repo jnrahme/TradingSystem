@@ -8,7 +8,9 @@ from .risk_engine import RiskEngine
 
 
 class ExecutionEngine:
-    def __init__(self, broker: BrokerAdapter, ledger: PortfolioLedger, risk_engine: RiskEngine):
+    def __init__(
+        self, broker: BrokerAdapter, ledger: PortfolioLedger, risk_engine: RiskEngine
+    ):
         self.broker = broker
         self.ledger = ledger
         self.risk_engine = risk_engine
@@ -25,7 +27,17 @@ class ExecutionEngine:
         results: list[OrderResult] = []
         for intent in intents:
             self.ledger.record_intent(intent)
-            intraday_metrics = self.ledger.get_intraday_metrics(self.broker.name, account)
+            intraday_metrics = self.ledger.get_intraday_metrics(
+                self.broker.name, account
+            )
+            try:
+                intraday_metrics = self.ledger.merge_broker_intraday_metrics(
+                    self.broker.name,
+                    account,
+                    self.broker.list_orders(status="all", limit=200),
+                )
+            except Exception:
+                pass
             decision = self.risk_engine.evaluate(
                 manifest=manifest,
                 account=account,

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field, is_dataclass
+from dataclasses import dataclass, field, fields, is_dataclass
 from datetime import date, datetime
 from enum import Enum
 from typing import Any
@@ -123,6 +123,14 @@ class StrategyManifest:
     paper_only_by_default: bool = True
     requires_manual_live_approval: bool = True
     tags: tuple[str, ...] = ()
+    minimum_replay_scenarios: int = 0
+    minimum_paper_entry_fills: int = 0
+    minimum_paper_exit_fills: int = 0
+    minimum_observed_days: int = 0
+    minimum_replay_win_rate_pct: float | None = None
+    minimum_replay_total_pnl: float | None = None
+    minimum_estimated_win_rate_pct: float | None = None
+    minimum_estimated_realized_pl: float | None = None
 
 
 @dataclass(slots=True)
@@ -216,7 +224,10 @@ def json_ready(value: Any) -> Any:
     if isinstance(value, (datetime, date)):
         return value.isoformat()
     if is_dataclass(value):
-        return {key: json_ready(val) for key, val in asdict(value).items()}
+        return {
+            dataclass_field.name: json_ready(getattr(value, dataclass_field.name))
+            for dataclass_field in fields(value)
+        }
     if isinstance(value, dict):
         return {str(key): json_ready(val) for key, val in value.items()}
     if isinstance(value, (list, tuple)):

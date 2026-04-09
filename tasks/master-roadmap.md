@@ -41,15 +41,31 @@
 - [ ] Finish Alpaca order lifecycle parity with stronger fill reconciliation, stale-order cleanup policy, and recovery hooks.
 - [ ] Finish legacy iron-condor lifecycle parity beyond the current entry-only slice.
 - [x] Add first-pass legacy iron-condor lifecycle controls: profit/stop/DTE exits, duplicate-expiry blocking, and broken-structure detection.
+- [x] Improve legacy iron-condor entry selection so the strategy searches the DTE window for the next available expiry with contracts.
+- [x] Add a first-pass VIX regime gate to the legacy iron-condor entry path when volatility quotes are available.
 - [ ] Define the reduced workflow set that replaces the useful legacy GitHub Actions without recreating the old workflow sprawl.
 
 ## Phase 3 — Research Lab
 
 - [ ] Build a replay harness specification for broad ETF regime strategies.
+- [x] Add a first synthetic demo replay harness for the current options strategy so exit logic can be exercised deterministically.
+- [x] Add a first bar-driven historical backtest for the current options strategy using real SPY bars plus modeled option pricing.
 - [ ] Define baseline strategies for momentum, mean-reversion, and event response.
 - [ ] Add a result schema for backtest / replay outputs.
 - [ ] Define evaluation metrics for regime quality, expectancy, drawdown, and live drift.
 - [ ] Create the first research notebook or script scaffold for broad-market strategy evaluation.
+- [x] Add a first-pass paper strategy scorecard so runtime claims are tied to ledger-observed evidence instead of guesses.
+- [x] Add a first-pass promotion gate that evaluates replay and paper evidence against strategy-defined thresholds.
+- [x] Add an autonomous market-hours supervisor with halt/status/heartbeat primitives and a service-wrapper example.
+- [x] Add first-class CLI controls for autonomous runtime status and halt/resume operations.
+- [x] Align the live DTE window to the enforced 11-52 entry range so new entries stay outside the 10-DTE forced-exit zone.
+- [x] Extend the live open-condor cap to 8 so the runtime can use that very near weekly rung without displacing the existing ladder.
+- [x] Merge broker-backed same-day order history into live intraday risk guardrails so daily structure limits survive local-ledger drift.
+- [x] Raise the same-day structure cap to match the live weekly ladder while keeping cumulative risk as the main exposure control.
+- [x] Lower the minimum credit floor to 0.40 so the near-expiry weekly rung is available without degrading constrained replay quality.
+- [x] Tolerate tiny option mark drift in live reconciliation so harmless quote jitter does not degrade the autonomous runtime.
+- [x] Raise the DTE exit threshold to 10 because it left constrained replay unchanged while making the near-expiry live condor eligible to close sooner.
+- [x] Lower the live take-profit target to 2.5% after constrained multi-window replay showed it stayed loss-free while shortening holding time further.
 
 ## Phase 4 — Data Stack
 
@@ -71,6 +87,8 @@
 - [x] Define the internal paper broker contract.
 - [ ] Define the broker capability registry.
 - [x] Build a first pass on Alpaca adapter requirements.
+- [x] Add account-scoped runtime isolation so multiple paper accounts can run independently from one repo checkout.
+- [x] Add a sequential multi-account runner so named paper accounts can auto-cycle from one CLI command.
 - [ ] Build a first pass on IBKR adapter requirements.
 - [ ] Build a first pass on Coinbase adapter requirements.
 - [ ] Write reconciliation requirements for broker fills versus canonical ledger.

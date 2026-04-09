@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 import json
+from math import erf, exp, log, sqrt
 from pathlib import Path
 from uuid import uuid4
 
@@ -21,7 +22,12 @@ from ..models import (
     Quote,
     Side,
 )
-from ..occ import build_occ_symbol, calculate_condor_strikes, calculate_target_expiry, parse_occ_symbol
+from ..occ import (
+    build_occ_symbol,
+    calculate_condor_strikes,
+    calculate_target_expiry,
+    parse_occ_symbol,
+)
 from ..time_utils import utc_now
 
 
@@ -48,7 +54,9 @@ class InternalPaperBrokerAdapter(BrokerAdapter):
     name = "internal-paper"
     mode = "paper-internal"
 
-    def __init__(self, snapshot: InternalPaperSnapshot, starting_cash: float = 100000.0):
+    def __init__(
+        self, snapshot: InternalPaperSnapshot, starting_cash: float = 100000.0
+    ):
         self.snapshot = snapshot
         self.starting_cash = starting_cash
         self.cash = starting_cash
@@ -57,7 +65,10 @@ class InternalPaperBrokerAdapter(BrokerAdapter):
 
     @classmethod
     def from_state_file(
-        cls, snapshot: InternalPaperSnapshot, state_path: Path, starting_cash: float = 100000.0
+        cls,
+        snapshot: InternalPaperSnapshot,
+        state_path: Path,
+        starting_cash: float = 100000.0,
     ) -> "InternalPaperBrokerAdapter":
         broker = cls(snapshot=snapshot, starting_cash=starting_cash)
         if not state_path.exists():
@@ -85,16 +96,26 @@ class InternalPaperBrokerAdapter(BrokerAdapter):
                 symbol=item.get("symbol"),
                 side=item.get("side"),
                 order_type=item.get("order_type"),
-                quantity=float(item["quantity"]) if item.get("quantity") is not None else None,
+                quantity=float(item["quantity"])
+                if item.get("quantity") is not None
+                else None,
                 filled_quantity=(
-                    float(item["filled_quantity"]) if item.get("filled_quantity") is not None else None
+                    float(item["filled_quantity"])
+                    if item.get("filled_quantity") is not None
+                    else None
                 ),
-                limit_price=float(item["limit_price"]) if item.get("limit_price") is not None else None,
+                limit_price=float(item["limit_price"])
+                if item.get("limit_price") is not None
+                else None,
                 created_at=datetime.fromisoformat(item["created_at"]),
                 submitted_at=(
-                    datetime.fromisoformat(item["submitted_at"]) if item.get("submitted_at") else None
+                    datetime.fromisoformat(item["submitted_at"])
+                    if item.get("submitted_at")
+                    else None
                 ),
-                filled_at=datetime.fromisoformat(item["filled_at"]) if item.get("filled_at") else None,
+                filled_at=datetime.fromisoformat(item["filled_at"])
+                if item.get("filled_at")
+                else None,
                 legs=[
                     OptionLeg(
                         symbol=leg["symbol"],
@@ -123,8 +144,12 @@ class InternalPaperBrokerAdapter(BrokerAdapter):
                 {
                     **asdict(order),
                     "created_at": order.created_at.isoformat(),
-                    "submitted_at": order.submitted_at.isoformat() if order.submitted_at else None,
-                    "filled_at": order.filled_at.isoformat() if order.filled_at else None,
+                    "submitted_at": order.submitted_at.isoformat()
+                    if order.submitted_at
+                    else None,
+                    "filled_at": order.filled_at.isoformat()
+                    if order.filled_at
+                    else None,
                     "legs": [
                         {
                             "symbol": leg.symbol,
@@ -145,7 +170,9 @@ class InternalPaperBrokerAdapter(BrokerAdapter):
     def get_stock_quote(self, symbol: str) -> Quote:
         return self.snapshot.stock_quotes[symbol]
 
-    def get_option_contracts(self, underlying: str, expiry: str) -> list[OptionContract]:
+    def get_option_contracts(
+        self, underlying: str, expiry: str
+    ) -> list[OptionContract]:
         return list(self.snapshot.option_contracts.get(f"{underlying}:{expiry}", []))
 
     def get_option_quotes(self, symbols: list[str]) -> dict[str, Quote]:
@@ -176,10 +203,14 @@ class InternalPaperBrokerAdapter(BrokerAdapter):
         for position in self._positions.values():
             current_price = self._position_current_price(position)
             market_value = round(current_price * position.qty * 100, 2)
-            unrealized_pl = round((current_price - position.avg_entry_price) * position.qty * 100, 2)
+            unrealized_pl = round(
+                (current_price - position.avg_entry_price) * position.qty * 100, 2
+            )
             if position.asset_class is AssetClass.EQUITY:
                 market_value = round(current_price * position.qty, 2)
-                unrealized_pl = round((current_price - position.avg_entry_price) * position.qty, 2)
+                unrealized_pl = round(
+                    (current_price - position.avg_entry_price) * position.qty, 2
+                )
             rendered.append(
                 Position(
                     symbol=position.symbol,
@@ -221,8 +252,10 @@ class InternalPaperBrokerAdapter(BrokerAdapter):
                     if parsed is None:
                         continue
                     quote = self.snapshot.option_quotes[leg.symbol].midpoint
-                    signed_qty = leg.ratio_qty * intent.quantity * (
-                        -1 if leg.side.value == "sell" else 1
+                    signed_qty = (
+                        leg.ratio_qty
+                        * intent.quantity
+                        * (-1 if leg.side.value == "sell" else 1)
                     )
                     self._positions[leg.symbol] = _PaperPosition(
                         symbol=leg.symbol,
@@ -234,13 +267,15 @@ class InternalPaperBrokerAdapter(BrokerAdapter):
                         metadata={"opened_from_intent": intent.intent_id},
                     )
             else:
-                self.cash -= total_credit
+                self.cash += total_credit
                 for leg in intent.legs:
                     existing = self._positions.get(leg.symbol)
                     if existing is None:
                         continue
-                    signed_qty = leg.ratio_qty * intent.quantity * (
-                        -1 if leg.side.value == "sell" else 1
+                    signed_qty = (
+                        leg.ratio_qty
+                        * intent.quantity
+                        * (-1 if leg.side.value == "sell" else 1)
                     )
                     new_qty = existing.qty + signed_qty
                     if abs(new_qty) < 1e-9:
@@ -271,7 +306,10 @@ class InternalPaperBrokerAdapter(BrokerAdapter):
                 created_at=submitted_at,
                 submitted_at=submitted_at,
                 filled_at=submitted_at,
-                legs=[OptionLeg(symbol=leg.symbol, side=leg.side, ratio_qty=leg.ratio_qty) for leg in intent.legs],
+                legs=[
+                    OptionLeg(symbol=leg.symbol, side=leg.side, ratio_qty=leg.ratio_qty)
+                    for leg in intent.legs
+                ],
                 raw={"adapter": self.name},
             )
             return result
@@ -316,11 +354,18 @@ class InternalPaperBrokerAdapter(BrokerAdapter):
         return result
 
     def list_orders(self, status: str = "all", limit: int = 200) -> list[BrokerOrder]:
-        orders = sorted(self._orders.values(), key=lambda order: order.created_at, reverse=True)
+        orders = sorted(
+            self._orders.values(), key=lambda order: order.created_at, reverse=True
+        )
         if status != "all":
             normalized = status.strip().lower()
             if normalized == "open":
-                orders = [order for order in orders if order.status not in {"filled", "canceled", "cancelled", "rejected"}]
+                orders = [
+                    order
+                    for order in orders
+                    if order.status
+                    not in {"filled", "canceled", "cancelled", "rejected"}
+                ]
             else:
                 orders = [order for order in orders if order.status == normalized]
         return orders[:limit]
@@ -335,7 +380,9 @@ class InternalPaperBrokerAdapter(BrokerAdapter):
         return {"cancelled": True, "order_id": order_id}
 
 
-def build_demo_snapshot(now: datetime | None = None, spy_price: float = 650.0) -> InternalPaperSnapshot:
+def build_demo_snapshot(
+    now: datetime | None = None, spy_price: float = 650.0
+) -> InternalPaperSnapshot:
     timestamp = now or utc_now()
     clock = MarketClock(timestamp=timestamp, is_open=True)
     expiry = calculate_target_expiry(timestamp)
@@ -370,11 +417,136 @@ def build_demo_snapshot(now: datetime | None = None, spy_price: float = 650.0) -
                 )
             )
             mid = price_map[strike]
-            option_quotes[symbol] = Quote(bid=round(mid - 0.05, 2), ask=round(mid + 0.05, 2))
+            option_quotes[symbol] = Quote(
+                bid=round(mid - 0.05, 2), ask=round(mid + 0.05, 2)
+            )
 
     return InternalPaperSnapshot(
         clock=clock,
-        stock_quotes={"SPY": Quote(bid=spy_price - 0.05, ask=spy_price + 0.05, last=spy_price)},
+        stock_quotes={
+            "SPY": Quote(bid=spy_price - 0.05, ask=spy_price + 0.05, last=spy_price),
+            "VIX": Quote(bid=17.95, ask=18.05, last=18.0),
+        },
         option_contracts={f"SPY:{expiry.isoformat()}": contracts},
+        option_quotes=option_quotes,
+    )
+
+
+def _norm_cdf(value: float) -> float:
+    return 0.5 * (1.0 + erf(value / sqrt(2.0)))
+
+
+def _black_scholes_mid(
+    spot: float,
+    strike: float,
+    years_to_expiry: float,
+    volatility: float,
+    option_type: str,
+    risk_free_rate: float = 0.05,
+) -> float:
+    if years_to_expiry <= 0:
+        if option_type == "P":
+            return max(0.0, strike - spot)
+        return max(0.0, spot - strike)
+    sigma = max(volatility, 0.0001)
+    d1 = (
+        log(max(spot, 0.01) / strike)
+        + (risk_free_rate + 0.5 * sigma * sigma) * years_to_expiry
+    ) / (sigma * sqrt(years_to_expiry))
+    d2 = d1 - sigma * sqrt(years_to_expiry)
+    if option_type == "C":
+        return max(
+            0.0,
+            spot * _norm_cdf(d1)
+            - strike * exp(-risk_free_rate * years_to_expiry) * _norm_cdf(d2),
+        )
+    return max(
+        0.0,
+        strike * exp(-risk_free_rate * years_to_expiry) * _norm_cdf(-d2)
+        - spot * _norm_cdf(-d1),
+    )
+
+
+def _quote_from_mid(mid: float) -> Quote:
+    spread = max(0.05, round(mid * 0.05, 2))
+    bid = max(0.0, round(mid - spread, 2))
+    ask = max(round(mid + spread, 2), round(bid + 0.01, 2))
+    return Quote(bid=bid, ask=ask, last=round(mid, 2))
+
+
+def build_modeled_snapshot(
+    now: datetime | None = None,
+    spy_price: float = 650.0,
+    vix_level: float = 18.0,
+    existing_option_symbols: list[str] | None = None,
+) -> InternalPaperSnapshot:
+    timestamp = now or utc_now()
+    clock = MarketClock(timestamp=timestamp, is_open=True)
+    option_quotes: dict[str, Quote] = {}
+    option_contracts: dict[str, list[OptionContract]] = {}
+    annual_volatility = max(0.10, min(0.60, vix_level / 100.0))
+
+    target_expiry = calculate_target_expiry(timestamp)
+    target_strikes = calculate_condor_strikes(spy_price)
+    generated_contracts: list[OptionContract] = []
+    for option_type, strike_list in {
+        "put": [target_strikes["long_put"], target_strikes["short_put"]],
+        "call": [target_strikes["short_call"], target_strikes["long_call"]],
+    }.items():
+        for strike in strike_list:
+            symbol = build_occ_symbol(
+                "SPY",
+                target_expiry,
+                "P" if option_type == "put" else "C",
+                strike,
+            )
+            generated_contracts.append(
+                OptionContract(
+                    symbol=symbol,
+                    underlying="SPY",
+                    expiry=target_expiry,
+                    strike=strike,
+                    option_type=option_type,
+                )
+            )
+    option_contracts[f"SPY:{target_expiry.isoformat()}"] = generated_contracts
+
+    for contract in generated_contracts:
+        dte = max(0, (contract.expiry - timestamp.date()).days)
+        mid = _black_scholes_mid(
+            spot=spy_price,
+            strike=contract.strike,
+            years_to_expiry=max(dte / 365.0, 1 / 365.0),
+            volatility=annual_volatility,
+            option_type="P" if contract.option_type == "put" else "C",
+        )
+        option_quotes[contract.symbol] = _quote_from_mid(mid)
+
+    for symbol in existing_option_symbols or []:
+        parsed = parse_occ_symbol(symbol)
+        if parsed is None or symbol in option_quotes:
+            continue
+        years_to_expiry = max((parsed.expiry - timestamp.date()).days / 365.0, 0.0)
+        option_quotes[symbol] = _quote_from_mid(
+            _black_scholes_mid(
+                spot=spy_price,
+                strike=parsed.strike,
+                years_to_expiry=years_to_expiry,
+                volatility=annual_volatility,
+                option_type=parsed.option_type,
+            )
+        )
+
+    return InternalPaperSnapshot(
+        clock=clock,
+        stock_quotes={
+            "SPY": Quote(bid=spy_price - 0.05, ask=spy_price + 0.05, last=spy_price),
+            "VIX": Quote(
+                bid=max(vix_level - 0.05, 0.0),
+                ask=max(vix_level + 0.05, 0.05),
+                last=vix_level,
+            ),
+        },
+        option_contracts=option_contracts,
         option_quotes=option_quotes,
     )

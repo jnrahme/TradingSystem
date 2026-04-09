@@ -47,7 +47,9 @@ def _serialize_order(order: BrokerOrder) -> dict[str, Any]:
     }
 
 
-def compare_positions(ledger_positions: list[Position], broker_positions: list[Position]) -> list[dict[str, Any]]:
+def compare_positions(
+    ledger_positions: list[Position], broker_positions: list[Position]
+) -> list[dict[str, Any]]:
     ledger_map = _position_dict(ledger_positions)
     broker_map = _position_dict(broker_positions)
     all_symbols = sorted(set(ledger_map) | set(broker_map))
@@ -91,7 +93,8 @@ def compare_positions(ledger_positions: list[Position], broker_positions: list[P
         broker_value = broker_position.market_value or 0.0
         ledger_value = ledger_position.market_value or 0.0
         denominator = abs(broker_value) if broker_value else 1.0
-        if abs(ledger_value - broker_value) / denominator > 0.01:
+        tolerance = max(1.0, denominator * 0.01)
+        if abs(ledger_value - broker_value) > tolerance:
             discrepancies.append(
                 {
                     "symbol": symbol,
@@ -104,12 +107,17 @@ def compare_positions(ledger_positions: list[Position], broker_positions: list[P
     return discrepancies
 
 
-def stale_orders(orders: list[BrokerOrder], max_age_minutes: int, now: datetime | None = None) -> list[BrokerOrder]:
-    cutoff = (now or datetime.now(UTC).replace(tzinfo=None)) - timedelta(minutes=max_age_minutes)
+def stale_orders(
+    orders: list[BrokerOrder], max_age_minutes: int, now: datetime | None = None
+) -> list[BrokerOrder]:
+    cutoff = (now or datetime.now(UTC).replace(tzinfo=None)) - timedelta(
+        minutes=max_age_minutes
+    )
     return [
         order
         for order in orders
-        if order.status.lower() not in {"filled", "canceled", "cancelled", "rejected", "expired"}
+        if order.status.lower()
+        not in {"filled", "canceled", "cancelled", "rejected", "expired"}
         and order.created_at <= cutoff
     ]
 
@@ -118,19 +126,36 @@ def stale_orders(orders: list[BrokerOrder], max_age_minutes: int, now: datetime 
 class ReconciliationService:
     broker: BrokerAdapter
     ledger: PortfolioLedger
+    account_id: str = "default"
 
     def reconcile(self, summary_path: Path | None = None) -> dict[str, Any]:
         account = self.broker.get_account_snapshot()
         ledger_positions_before = self.ledger.get_positions(self.broker.name)
         broker_positions = self.broker.get_positions()
-        position_discrepancies = compare_positions(ledger_positions_before, broker_positions)
+        position_discrepancies = compare_positions(
+            ledger_positions_before, broker_positions
+        )
+        all_orders = self.broker.list_orders(status="all")
+        self.ledger.sync_broker_orders(self.broker.name, all_orders)
         open_orders = self.broker.list_orders(status="open")
 
         self.ledger.replace_positions(self.broker.name, broker_positions)
-        summary = self.ledger.write_summary(summary_path, account, self.broker.name) if summary_path else self.ledger.build_summary(account, self.broker.name)
+        summary = (
+            self.ledger.write_summary(
+                summary_path,
+                account,
+                self.broker.name,
+                account_id=self.account_id,
+            )
+            if summary_path
+            else self.ledger.build_summary(
+                account, self.broker.name, account_id=self.account_id
+            )
+        )
 
         return {
             "ok": True,
+            "account_id": self.account_id,
             "broker": self.broker.name,
             "account_status": account.status,
             "ledger_position_count_before": len(ledger_positions_before),
@@ -151,6 +176,9 @@ class ReconciliationService:
         ledger_positions = self.ledger.get_positions(self.broker.name)
         broker_positions = self.broker.get_positions()
         position_discrepancies = compare_positions(ledger_positions, broker_positions)
+        all_orders = self.broker.list_orders(status="all")
+        self.ledger.sync_broker_orders(self.broker.name, all_orders)
+        self.ledger.replace_positions(self.broker.name, broker_positions)
         open_orders = self.broker.list_orders(status="open")
         stale_before = stale_orders(open_orders, stale_order_age_minutes)
         cancelled: list[dict[str, str | bool]] = []
@@ -170,6 +198,7 @@ class ReconciliationService:
 
         return {
             "ok": ok,
+            "account_id": self.account_id,
             "broker": self.broker.name,
             "account_status": account.status,
             "paper_mode": self.broker.mode,
